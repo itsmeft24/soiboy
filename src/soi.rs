@@ -53,7 +53,7 @@ pub struct ModelInfo {
 
   pub name: [u8; 260],
 
-  zone: i32,
+  pub zone: i32,
   pub parameter_count: i32,
 }
 

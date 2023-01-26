@@ -248,14 +248,27 @@ pub struct StreamingCollisionModel {
 
 impl std::fmt::Display for StreamingCollisionModel {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(
-      f,
-      "COL={}.col\nPosition={}\nLookVector={}\nUpVector={}\n",
-      clean_string(&self.model_info.name),
-      self.model_info.position,
-      self.model_info.look_vector,
-      self.model_info.up_vector
-    );
+	if self.model_info.zone != -1 {
+		write!(
+		  f,
+		  "COL={}.col\nPosition={}\nLookVector={}\nUpVector={}\nZone={}\n",
+		  clean_string(&self.model_info.name),
+		  self.model_info.position,
+		  self.model_info.look_vector,
+		  self.model_info.up_vector,
+		  self.model_info.zone
+		);
+	}
+	else {
+		write!(
+		  f,
+		  "COL={}.col\nPosition={}\nLookVector={}\nUpVector={}\n",
+		  clean_string(&self.model_info.name),
+		  self.model_info.position,
+		  self.model_info.look_vector,
+		  self.model_info.up_vector,
+		);
+	}
     Ok(for param in self.parameters.iter() {
       write!(f, "{}\n", param);
     })
