@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use binrw::{BinWrite, WriteOptions};
+use binrw::{BinWrite};
 use x_flipper_360::*;
 
 use crate::utils::*;
@@ -12,7 +12,7 @@ use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
 fn extract() {
   let toc_path = Path::new("./data/VehicleInfo.x360.toc");
   let soi_path = Path::new("./data/VehicleInfo.x360.soi");
-  let str_path = Path::new("data/VehicleInfo.x360.str");
+  let str_path = Path::new("./data/VehicleInfo.x360.str");
 
   let soup = SoiSoup::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
@@ -31,7 +31,7 @@ fn extract() {
 
   for static_texture in soup.static_textures().iter() {
     let path = PathBuf::from(format!(
-      "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.dds",
+      ".\\data\\VehicleInfo\\{}.dds",
       clean_path(&static_texture.model_info.name)
     ));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -43,11 +43,11 @@ fn extract() {
 #[test]
 fn dump_scn() {
   let toc_path =
-    Path::new("D:\\Xbox 360\\RoRX360_Extracted\\RELEASE (NEW)\\C\\Scenes\\CR_04\\CR_04.x360.toc");
+    Path::new("./data/VehicleInfo.x360.toc");
   let soi_path =
-    Path::new("D:\\Xbox 360\\RoRX360_Extracted\\RELEASE (NEW)\\C\\Scenes\\CR_04\\CR_04.x360.soi");
+    Path::new("./data/VehicleInfo.x360.soi");
   let str_path =
-    Path::new("D:\\Xbox 360\\RoRX360_Extracted\\RELEASE (NEW)\\C\\Scenes\\CR_04\\CR_04.x360.str");
+    Path::new("./data/VehicleInfo.x360.res");
   let soup = SoiSoup::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
   let mut num_anim_models = 1;
@@ -130,7 +130,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
       .unwrap();
 
     let path = PathBuf::from(format!(
-      "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.got",
+      ".\\data\\VehicleInfo\\{}.got",
       component.path
     ));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -145,18 +145,17 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
       .unwrap();
 
     let path = PathBuf::from(format!(
-      "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.xng",
+      ".\\data\\VehicleInfo\\{}.xng",
       component.path
     ));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
-    let options = WriteOptions::new(binrw::Endian::Big);
     header
       .streaming_model_header
       .write_options(
         &mut out,
-        &options,
-        XNGHeaderArgs {
+        binrw::Endian::Big,
+        &XNGHeaderArgs {
           streaming_data: component.data.clone(),
         },
       )
@@ -168,18 +167,17 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
       .unwrap();
 
     let path = PathBuf::from(format!(
-      "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.gol",
+      ".\\data\\VehicleInfo\\{}.gol",
       component.path
     ));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
-    let options = WriteOptions::new(binrw::Endian::Big);
     header
       .collision_model
       .write_options(
         &mut out,
-        &options,
-        CollisionModelArgs {
+        binrw::Endian::Big,
+        &CollisionModelArgs {
           ror: false,
           streaming_data: component.data.clone(),
         },
@@ -210,7 +208,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
             };
 
             let path = PathBuf::from(format!(
-              "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.dds",
+              ".\\data\\VehicleInfo\\{}.dds",
               component.path
             ));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -235,7 +233,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
             };
 
             let path = PathBuf::from(format!(
-              "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.dds",
+              ".\\data\\VehicleInfo\\{}.dds",
               component.path
             ));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -260,7 +258,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
             };
 
             let path = PathBuf::from(format!(
-              "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.dds",
+              ".\\data\\VehicleInfo\\{}.dds",
               component.path
             ));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -285,7 +283,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
             };
 
             let path = PathBuf::from(format!(
-              "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.dds",
+              ".\\data\\VehicleInfo\\{}.dds",
               component.path
             ));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -297,7 +295,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
       None => match soup.find_static_texture(section_id, component.id, component.instance_id) {
         Some(static_texture) => {
           let path = PathBuf::from(format!(
-            "D:\\GigaLeak\\Rs_A_Mn\\Out\\{}.dds",
+            ".\\data\\VehicleInfo\\{}.dds",
             component.path
           ));
           std::fs::create_dir_all(path.parent().unwrap()).unwrap();

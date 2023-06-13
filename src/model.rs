@@ -170,12 +170,12 @@ impl BinWrite for XNGHeader {
     args: Self::Args<'_>,
   ) -> BinResult<()> {
     let magic = b"xng\0".to_vec();
-    Vec::write_options(&magic, writer, endian, ())?;
+    Vec::<u8>::write_options(&magic, writer, endian, ())?;
     i32::write_options(&self.version, writer, endian, ())?;
     u32::write_options(&self.num_bones, writer, endian, ())?;
-    Vec::write_options(&self.bones, writer, endian, ())?;
+    Vec::<XNGBone>::write_options(&self.bones, writer, endian, ())?;
     i32::write_options(&self.num_mesh_names, writer, endian, ())?;
-    Vec::write_options(&self.mesh_names, writer, endian, ())?;
+    Vec::<XNGMeshName>::write_options(&self.mesh_names, writer, endian, ())?;
     u8::write_options(&self.num_lod, writer, endian, ())?;
     u8::write_options(&self.skin_animates_flag, writer, endian, ())?;
     u8::write_options(&self.has_weight, writer, endian, ())?;
@@ -198,7 +198,7 @@ impl BinWrite for XNGHeader {
         u8::write_options(&mesh.unk, writer, endian, ())?;
         u8::write_options(&mesh.unk2, writer, endian, ())?;
         u8::write_options(&mesh.unk3, writer, endian, ())?;
-        Vec::write_options(&mesh.texture_coordinate_sets, writer, endian, ())?;
+        Vec::<f32>::write_options(&mesh.texture_coordinate_sets, writer, endian, ())?;
 
         u16::write_options(&mesh.num_vertices, writer, endian, ())?;
         u16::write_options(&mesh.num_face_indices, writer, endian, ())?;
@@ -242,7 +242,7 @@ impl BinWrite for XNGHeader {
         }
 
         let data = (&args.streaming_data[offset_in_data..offset_in_data + offset]).to_vec();
-        Vec::write_options(&data, writer, endian, ())?;
+        Vec::<u8>::write_options(&data, writer, endian, ())?;
 
         offset_in_data += offset;
 
