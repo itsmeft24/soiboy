@@ -1,5 +1,5 @@
 pub use crate::collision::*;
-pub use crate::model::*;
+pub use crate::models::*;
 pub use crate::motion::*;
 pub use crate::soi::*;
 pub use crate::soi_soup::*;
@@ -8,13 +8,14 @@ pub use crate::toc::*;
 pub use crate::utils::*;
 
 mod collision;
-mod model;
+mod models;
 mod motion;
 mod soi;
 mod soi_soup;
 mod str;
 mod toc;
 mod utils;
+mod wii_th;
 
 #[cfg(test)]
 mod test;

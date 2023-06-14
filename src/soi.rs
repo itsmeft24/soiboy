@@ -4,7 +4,7 @@ use std::path::Path;
 use binrw::{BinRead, BinReaderExt, BinResult};
 
 use crate::collision::*;
-use crate::model::*;
+use crate::models::*;
 use crate::motion::*;
 use crate::utils::*;
 
@@ -77,7 +77,7 @@ impl std::fmt::Display for StreamingParameter {
 #[derive(BinRead, Debug)]
 pub struct StreamingTexture<TH: BinRead<Args<'static> = ()> + 'static> {
   pub model_info: ModelInfo,
-  pub padding: u32,
+  //pub padding: u32,
   pub header: TH,
 }
 
@@ -108,14 +108,13 @@ pub struct Soi<TH: BinRead<Args<'static> = ()> + 'static> {
 
   #[br(count = header.motion_packs)]
   motion_packs: Vec<StreamingMotionPack>,
-
   // #[br(if(header.flags & 64 == 1))]
   // collision_grid_info: StreamingCollisionGridInfo,
-  #[br(count = header.renderable_models)]
-  renderable_models: Vec<StreamingRenderableModel>,
+  // #[br(count = header.renderable_models)]
+  // renderable_models: Vec<StreamingRenderableModel>,
 
-  #[br(count = header.collision_models)]
-  collision_models: Vec<StreamingCollisionModel>,
+  // #[br(count = header.collision_models)]
+  // collision_models: Vec<StreamingCollisionModel>,
 }
 
 impl<TH: BinRead<Args<'static> = ()>> Soi<TH> {
@@ -140,13 +139,13 @@ impl<TH: BinRead<Args<'static> = ()>> Soi<TH> {
     return &self.motion_packs;
   }
 
-  pub fn get_renderable_models(&self) -> &[StreamingRenderableModel] {
-    return &self.renderable_models;
-  }
+  // pub fn get_renderable_models(&self) -> &[StreamingRenderableModel] {
+  //   return &self.renderable_models;
+  // }
 
-  pub fn get_collision_models(&self) -> &[StreamingCollisionModel] {
-    return &self.collision_models;
-  }
+  // pub fn get_collision_models(&self) -> &[StreamingCollisionModel] {
+  //   return &self.collision_models;
+  // }
 
   pub fn find_static_texture(&self, section_id: u32, component_id: u32) -> Option<&StaticTexture> {
     for texture in &self.static_textures {
@@ -195,37 +194,37 @@ impl<TH: BinRead<Args<'static> = ()>> Soi<TH> {
     None
   }
 
-  pub fn find_collision_model(
-    &self,
-    section_id: u32,
-    component_id: u32,
-  ) -> Option<&StreamingCollisionModel> {
-    for collision_model in &self.collision_models {
-      let model_info = &collision_model.model_info;
-      if model_info.section_id == section_id as i32
-        && model_info.component_id == component_id as i32
-      {
-        return Some(&collision_model);
-      }
-    }
+  // pub fn find_collision_model(
+  //   &self,
+  //   section_id: u32,
+  //   component_id: u32,
+  // ) -> Option<&StreamingCollisionModel> {
+  //   for collision_model in &self.collision_models {
+  //     let model_info = &collision_model.model_info;
+  //     if model_info.section_id == section_id as i32
+  //       && model_info.component_id == component_id as i32
+  //     {
+  //       return Some(&collision_model);
+  //     }
+  //   }
 
-    None
-  }
+  //   None
+  // }
 
-  pub fn find_model(
-    &self,
-    section_id: u32,
-    component_id: u32,
-  ) -> Option<&StreamingRenderableModel> {
-    for model in &self.renderable_models {
-      let model_info = &model.model_info;
-      if model_info.section_id == section_id as i32
-        && model_info.component_id == component_id as i32
-      {
-        return Some(&model);
-      }
-    }
+  // pub fn find_model(
+  //   &self,
+  //   section_id: u32,
+  //   component_id: u32,
+  // ) -> Option<&StreamingRenderableModel> {
+  //   for model in &self.renderable_models {
+  //     let model_info = &model.model_info;
+  //     if model_info.section_id == section_id as i32
+  //       && model_info.component_id == component_id as i32
+  //     {
+  //       return Some(&model);
+  //     }
+  //   }
 
-    None
-  }
+  //   None
+  // }
 }
