@@ -5,7 +5,7 @@ use binrw::BinWrite;
 use x_flipper_360::*;
 
 use crate::utils::*;
-use crate::wii_th::{GCNTextureHeader, GCTSurfaceHeader};
+use crate::textures::{GCNTextureHeader, GCTSurfaceHeader};
 use crate::ComponentKind::{self, *};
 use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
 

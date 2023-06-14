@@ -1,5 +1,6 @@
 pub use crate::collision::*;
 pub use crate::models::*;
+pub use crate::textures::*;
 pub use crate::motion::*;
 pub use crate::soi::*;
 pub use crate::soi_soup::*;
@@ -15,7 +16,7 @@ mod soi_soup;
 mod str;
 mod toc;
 mod utils;
-mod wii_th;
+mod textures;
 
 #[cfg(test)]
 mod test;
