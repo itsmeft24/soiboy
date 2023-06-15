@@ -1,25 +1,7 @@
 use binrw::{BinRead, BinResult, BinWrite, Endian};
 use std::io::{Seek, Write};
 
-use crate::utils::*;
-
-#[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
-pub struct XNGMeshName {
-  #[br(count = 64)]
-  name: Vec<u8>,
-}
-
-#[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
-pub struct XNGBone {
-  name: [u8; 128],
-  matrix: [f32; 16],
-  bounding_box_center: [f32; 3],
-  bounding_box_half: [f32; 3],
-  bounding_box_radius: f32,
-  parent_index: u32,
-}
+use crate::{utils::*, Bone, MeshName};
 
 #[derive(Default, BinRead, BinWrite, Debug)]
 #[brw(big)]
@@ -97,12 +79,12 @@ pub struct XNGHeader {
   num_bones: u32,
 
   #[br(count = num_bones)]
-  bones: Vec<XNGBone>,
+  bones: Vec<Bone>,
 
   num_mesh_names: i32,
 
   #[br(count = num_mesh_names)]
-  pub mesh_names: Vec<XNGMeshName>,
+  pub mesh_names: Vec<MeshName>,
 
   pub num_lod: u8,
   skin_animates_flag: u8,
@@ -111,44 +93,6 @@ pub struct XNGHeader {
 
   #[br(count = num_lod)]
   pub lods: Vec<XNGLod>,
-}
-
-#[derive(BinRead, Debug)]
-pub struct StreamingRenderableModel {
-  pub model_info: crate::ModelInfo,
-
-  #[br(count = model_info.parameter_count)]
-  pub parameters: Vec<crate::StreamingParameter>,
-
-  pub streaming_model_header: XNGHeader,
-}
-
-impl std::fmt::Display for StreamingRenderableModel {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    if self.model_info.zone != -1 {
-      write!(
-        f,
-        "SLT={}\nPosition={}\nLookVector={}\nUpVector={}\nZone={}\n",
-        clean_string(&self.model_info.name),
-        self.model_info.position,
-        self.model_info.look_vector,
-        self.model_info.up_vector,
-        self.model_info.zone
-      );
-    } else {
-      write!(
-        f,
-        "SLT={}\nPosition={}\nLookVector={}\nUpVector={}\n",
-        clean_string(&self.model_info.name),
-        self.model_info.position,
-        self.model_info.look_vector,
-        self.model_info.up_vector,
-      );
-    }
-    Ok(for param in self.parameters.iter() {
-      write!(f, "{}\n", param);
-    })
-  }
 }
 
 // BinrwNamedArgs
@@ -172,9 +116,9 @@ impl BinWrite for XNGHeader {
     Vec::<u8>::write_options(&magic, writer, endian, ())?;
     i32::write_options(&self.version, writer, endian, ())?;
     u32::write_options(&self.num_bones, writer, endian, ())?;
-    Vec::<XNGBone>::write_options(&self.bones, writer, endian, ())?;
+    Vec::<Bone>::write_options(&self.bones, writer, endian, ())?;
     i32::write_options(&self.num_mesh_names, writer, endian, ())?;
-    Vec::<XNGMeshName>::write_options(&self.mesh_names, writer, endian, ())?;
+    Vec::<MeshName>::write_options(&self.mesh_names, writer, endian, ())?;
     u8::write_options(&self.num_lod, writer, endian, ())?;
     u8::write_options(&self.skin_animates_flag, writer, endian, ())?;
     u8::write_options(&self.has_weight, writer, endian, ())?;

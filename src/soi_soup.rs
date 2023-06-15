@@ -7,12 +7,15 @@ use crate::{
   StreamingRenderableModel, StreamingTexture, Toc,
 };
 
-pub struct SoiSoup<TH: BinRead<Args<'static> = ()> + 'static> {
+pub struct SoiSoup<
+  TH: BinRead<Args<'static> = ()> + 'static,
+  MH: BinRead<Args<'static> = ()> + 'static,
+> {
   toc: Toc,
-  soi: Soi<TH>,
+  soi: Soi<TH, MH>,
 }
 
-impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
+impl<TH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> SoiSoup<TH, MH> {
   pub fn cook(toc_path: &Path, soi_path: &Path) -> BinResult<Self> {
     let soi = Soi::read(soi_path)?;
     let toc = Toc::read(toc_path, soi.header.version == 0x101)?;
@@ -54,13 +57,13 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     self.soi.get_motion_packs()
   }
 
-  // pub fn renderable_models(&self) -> &[StreamingRenderableModel] {
-  //   self.soi.get_renderable_models()
-  // }
-  //
-  // pub fn collision_models(&self) -> &[StreamingCollisionModel] {
-  //   self.soi.get_collision_models()
-  // }
+  pub fn renderable_models(&self) -> &[StreamingRenderableModel<MH>] {
+    self.soi.get_renderable_models()
+  }
+
+  pub fn collision_models(&self) -> &[StreamingCollisionModel] {
+    self.soi.get_collision_models()
+  }
 
   pub fn component_count(&self) -> u32 {
     let mut sum = 0;
@@ -114,31 +117,31 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     self.soi.find_motion_pack(section_id, component_id)
   }
 
-  // pub fn find_collision_model(
-  //   &self,
-  //   section_id: u32,
-  //   component_id: u32,
-  //   instance_id: u32,
-  // ) -> Option<&StreamingCollisionModel> {
-  //   if let Some(header) = self.soi.find_collision_model(section_id, component_id) {
-  //     return Some(header);
-  //   }
-  //
-  //   let (section_id, component_id) = self.toc.find_ids(instance_id)?;
-  //   self.soi.find_collision_model(section_id, component_id)
-  // }
-  //
-  // pub fn find_model(
-  //   &self,
-  //   section_id: u32,
-  //   component_id: u32,
-  //   instance_id: u32,
-  // ) -> Option<&StreamingRenderableModel> {
-  //   if let Some(header) = self.soi.find_model(section_id, component_id) {
-  //     return Some(header);
-  //   }
-  //
-  //   let (section_id, component_id) = self.toc.find_ids(instance_id)?;
-  //   self.soi.find_model(section_id, component_id)
-  // }
+  pub fn find_collision_model(
+    &self,
+    section_id: u32,
+    component_id: u32,
+    instance_id: u32,
+  ) -> Option<&StreamingCollisionModel> {
+    if let Some(header) = self.soi.find_collision_model(section_id, component_id) {
+      return Some(header);
+    }
+
+    let (section_id, component_id) = self.toc.find_ids(instance_id)?;
+    self.soi.find_collision_model(section_id, component_id)
+  }
+
+  pub fn find_model(
+    &self,
+    section_id: u32,
+    component_id: u32,
+    instance_id: u32,
+  ) -> Option<&StreamingRenderableModel<MH>> {
+    if let Some(header) = self.soi.find_model(section_id, component_id) {
+      return Some(header);
+    }
+
+    let (section_id, component_id) = self.toc.find_ids(instance_id)?;
+    self.soi.find_model(section_id, component_id)
+  }
 }

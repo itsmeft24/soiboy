@@ -47,20 +47,20 @@ impl GCTFormat {
     let size_bytes = div_round_up(width, blk_width_pixels)
       * div_round_up(height, blk_height_pixels)
       * blk_size_bytes;
-    
+
     size_bytes
   }
 }
 
 impl std::fmt::Display for GCTFormat {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      match self {
-        GCTFormat::Rgba8 => write!(f, "Rgba8"),
-        GCTFormat::Cmpr | GCTFormat::Cmpr_MM => write!(f, "Cmpr"),
-        GCTFormat::Ci8  | GCTFormat::Ci8_MM => write!(f, "Ci8"),
-        GCTFormat::I8 => write!(f, "I8"),
-      }
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      GCTFormat::Rgba8 => write!(f, "Rgba8"),
+      GCTFormat::Cmpr | GCTFormat::Cmpr_MM => write!(f, "Cmpr"),
+      GCTFormat::Ci8 | GCTFormat::Ci8_MM => write!(f, "Ci8"),
+      GCTFormat::I8 => write!(f, "I8"),
     }
+  }
 }
 
 #[derive(BinRead, BinWrite, Debug, Clone)]
@@ -71,7 +71,7 @@ pub(crate) struct GCNTextureHeader {
 
   #[br(count = palette_size * 2)]
   pub palette: Vec<u8>,
-  
+
   pub mip_count: u32,
   pub width: u32,
   pub height: u32,
@@ -92,14 +92,14 @@ impl GCNTextureHeader {
     let mut size_bytes = div_round_up(self.width as usize, blk_width_pixels)
       * div_round_up(self.height as usize, blk_height_pixels)
       * blk_size_bytes;
-    
+
     for i in 1..self.mip_count {
       let mip_width = self.width as usize / (2 as usize).pow(i);
       let mip_height = self.height as usize / (2 as usize).pow(i);
 
       size_bytes += div_round_up(mip_width as usize, blk_width_pixels)
-      * div_round_up(mip_height as usize, blk_height_pixels)
-      * blk_size_bytes;
+        * div_round_up(mip_height as usize, blk_height_pixels)
+        * blk_size_bytes;
     }
 
     size_bytes

@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 use binrw::BinWrite;
 use x_flipper_360::*;
 
-use crate::utils::*;
 use crate::textures::{GCNTextureHeader, GCTSurfaceHeader};
 use crate::ComponentKind::{self, *};
+use crate::{utils::*, GCGHeader, XNGHeader};
 use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
 
 #[test]
@@ -15,30 +15,22 @@ fn extract() {
   let soi_path = Path::new("./data/CR_03.gcn.soi");
   let str_path = Path::new("./data/CR_03.gcn.str");
 
-  let soup = SoiSoup::<GCNTextureHeader>::cook(toc_path, soi_path).unwrap();
+  let soup = SoiSoup::<GCNTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
 
+  /*
   for (id, section) in soup.find_sections().iter().enumerate() {
     let section_data = str.read_section_data(section).unwrap();
-  
+
     for component in section_data.uncached {
       process_component_wii(&soup, id as u32, component);
     }
-  
+
     for component in section_data.cached {
       process_component_wii(&soup, id as u32, component);
     }
   }
-
-  for static_texture in soup.static_textures().iter() {
-    let path = PathBuf::from(format!(
-      ".\\data\\CR_03\\{}.gct",
-      clean_path(&static_texture.model_info.name)
-    ));
-    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-    let mut out = std::fs::File::create(path).unwrap();
-    out.write_all(&static_texture.header_file).unwrap();
-  }
+  */
 }
 
 #[test]
@@ -46,7 +38,7 @@ fn dump_scn() {
   let toc_path = Path::new("./data/CR_03.gcn.toc");
   let soi_path = Path::new("./data/CR_03.gcn.soi");
   let str_path = Path::new("./data/CR_03.gcn.str");
-  let soup = SoiSoup::<GCNTextureHeader>::cook(toc_path, soi_path).unwrap();
+  let soup = SoiSoup::<GCNTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
   let mut num_anim_models = 1;
   let mut num_static_models = 1;
@@ -78,8 +70,11 @@ fn dump_scn() {
   }
 }
 
-fn print_component<TH: binrw::BinRead<Args<'static> = ()> + 'static>(
-  soup: &SoiSoup<TH>,
+fn print_component<
+  TH: binrw::BinRead<Args<'static> = ()> + 'static,
+  MH: binrw::BinRead<Args<'static> = ()> + 'static,
+>(
+  soup: &SoiSoup<TH, MH>,
   section_id: u32,
   component: ComponentData,
   num_anim_models: &mut i32,
@@ -87,28 +82,28 @@ fn print_component<TH: binrw::BinRead<Args<'static> = ()> + 'static>(
   num_objects: &mut i32,
 ) {
   match component.kind {
-    // RenderableModel => {
-    //   let header = soup
-    //     .find_model(section_id, component.id, component.instance_id)
-    //     .unwrap();
-    //   if header.model_info.is_animated == 1 {
-    //     println!("[AnimatedModel{}]\n{}", num_anim_models, header);
-    //     *num_anim_models = *num_anim_models + 1;
-    //   } else {
-    //     println!("[Model{}]\n{}", num_static_models, header);
-    //     *num_static_models = *num_static_models + 1;
-    //   }
-    // }
+    RenderableModel => {
+      let header = soup
+        .find_model(section_id, component.id, component.instance_id)
+        .unwrap();
+      if header.model_info.is_animated == 1 {
+        println!("[AnimatedModel{}]\n{}", num_anim_models, header);
+        *num_anim_models = *num_anim_models + 1;
+      } else {
+        println!("[Model{}]\n{}", num_static_models, header);
+        *num_static_models = *num_static_models + 1;
+      }
+    }
     Texture => {
       // println!("found Texture component kind; skipping...");
     }
-    // CollisionModel => {
-    //   let header = soup
-    //     .find_collision_model(section_id, component.id, component.instance_id)
-    //     .unwrap();
-    //   println!("[Object{}]\n{}", num_objects, header);
-    //   *num_objects = *num_objects + 1;
-    // }
+    CollisionModel => {
+      let header = soup
+        .find_collision_model(section_id, component.id, component.instance_id)
+        .unwrap();
+      println!("[Object{}]\n{}", num_objects, header);
+      *num_objects = *num_objects + 1;
+    }
     UserData => {
       // println!("found UserData component kind; skipping...");
     }
@@ -118,13 +113,14 @@ fn print_component<TH: binrw::BinRead<Args<'static> = ()> + 'static>(
     CollisionGrid => {
       // println!("found CollisionGrid component kind; skipping...");
     }
-    RenderableModel => todo!(),
-    CollisionModel => todo!(),
   }
 }
 
-
-fn process_component_wii(soup: &SoiSoup<GCNTextureHeader>, section_id: u32, component: ComponentData) {
+fn process_component_wii(
+  soup: &SoiSoup<GCNTextureHeader, GCGHeader>,
+  section_id: u32,
+  component: ComponentData,
+) {
   if component.kind == ComponentKind::MotionPack {
     let header = soup
       .find_motion_pack(section_id, component.id, component.instance_id)
@@ -185,7 +181,6 @@ fn process_component_wii(soup: &SoiSoup<GCNTextureHeader>, section_id: u32, comp
   if component.kind == ComponentKind::Texture {
     match soup.find_streaming_texture(section_id, component.id, component.instance_id) {
       Some(streaming_texture) => {
-
         let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gct", component.path));
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         let mut out = std::fs::File::create(path).unwrap();
@@ -195,7 +190,7 @@ fn process_component_wii(soup: &SoiSoup<GCNTextureHeader>, section_id: u32, comp
         gct_file_header.version = 2;
         gct_file_header.write_be(&mut out).unwrap();
 
-        // Keeps track of our position in the streaming data. 
+        // Keeps track of our position in the streaming data.
         let mut offset = 0;
         let mip_count = streaming_texture.header.mip_count;
 
@@ -207,7 +202,10 @@ fn process_component_wii(soup: &SoiSoup<GCNTextureHeader>, section_id: u32, comp
           let mip_width = 1.max(streaming_texture.header.width as usize / (2 as usize).pow(i));
           let mip_height = 1.max(streaming_texture.header.height as usize / (2 as usize).pow(i));
 
-          let mip_size = streaming_texture.header.format.calculate_mip_size(mip_width, mip_height);
+          let mip_size = streaming_texture
+            .header
+            .format
+            .calculate_mip_size(mip_width, mip_height);
 
           mips.push(offset..offset + mip_size);
 
@@ -226,22 +224,30 @@ fn process_component_wii(soup: &SoiSoup<GCNTextureHeader>, section_id: u32, comp
           let surface_header = GCTSurfaceHeader {
             width: mip_width as u32,
             height: mip_height as u32,
-            size: streaming_texture.header.format.calculate_mip_size(mip_width, mip_height) as u32
+            size: streaming_texture
+              .header
+              .format
+              .calculate_mip_size(mip_width, mip_height) as u32,
           };
           surface_header.write_be(&mut out).unwrap();
 
-          component.data[mips.get(i as usize).unwrap().clone()].write(&mut out).unwrap();
+          component.data[mips.get(i as usize).unwrap().clone()]
+            .write(&mut out)
+            .unwrap();
         }
       }
       None => {
         panic!("Failed to find texture header.");
-      },
+      }
     }
   }
 }
 
-
-fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: ComponentData) {
+fn process_component(
+  soup: &SoiSoup<TextureHeader, XNGHeader>,
+  section_id: u32,
+  component: ComponentData,
+) {
   if component.kind == ComponentKind::MotionPack {
     let header = soup
       .find_motion_pack(section_id, component.id, component.instance_id)
@@ -365,7 +371,7 @@ fn process_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: 
               base_address: metadata.base_address(),
               mip_address: metadata.mip_address(),
             };
-            
+
             let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             let mut out = std::fs::File::create(path).unwrap();
