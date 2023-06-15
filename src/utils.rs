@@ -71,7 +71,7 @@ pub fn div_round_up(num_to_round: usize, round_to: usize) -> usize {
   return (num_to_round + round_to - 1) / round_to;
 }
 
-pub(crate) fn clean_path(input: &[u8]) -> String {
+pub fn clean_path(input: &[u8]) -> String {
   let mut output = String::new();
 
   for c in input {
