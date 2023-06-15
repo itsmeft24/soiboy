@@ -63,12 +63,12 @@ pub struct Vector4i16 {
   pub w: i16,
 }
 
-pub(crate) fn round_up(numToRound: usize, roundTo: usize) -> usize {
-  return ((numToRound + roundTo - 1) / roundTo) * roundTo;
+pub fn round_up(num_to_round: usize, round_to: usize) -> usize {
+  return ((num_to_round + round_to - 1) / round_to) * round_to;
 }
 
-pub(crate) fn div_round_up(numToRound: usize, roundTo: usize) -> usize {
-  return (numToRound + roundTo - 1) / roundTo;
+pub fn div_round_up(num_to_round: usize, round_to: usize) -> usize {
+  return (num_to_round + round_to - 1) / round_to;
 }
 
 pub(crate) fn clean_path(input: &[u8]) -> String {

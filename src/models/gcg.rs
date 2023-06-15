@@ -1,4 +1,3 @@
-use core::num;
 use std::io::{Seek, Write};
 
 use binrw::{BinRead, BinResult, BinWrite, Endian};
@@ -8,21 +7,21 @@ use crate::{Bone, MeshName};
 #[derive(BinRead, BinWrite, PartialEq, Debug, Clone, Copy)]
 #[brw(repr = u8)]
 pub enum GXCompType {
-  GX_U8 = 0,
-  GX_S8 = 1,
-  GX_U16 = 2,
-  GX_S16 = 3,
-  GX_F32 = 4,
-  GX_U32 = 5,
+  GxU8 = 0,
+  GxS8 = 1,
+  GxU16 = 2,
+  GxS16 = 3,
+  GxF32 = 4,
+  GxU32 = 5,
 }
 
 #[derive(BinRead, BinWrite, PartialEq, Debug, Clone, Copy)]
 #[brw(repr = u8)]
 pub enum GXAttrType {
-  GX_NONE = 0,
-  GX_DIRECT = 1,
-  GX_INDEX8 = 2,
-  GX_INDEX16 = 3,
+  GxNone = 0,
+  GxDirect = 1,
+  GxIndex8 = 2,
+  GxIndex16 = 3,
 }
 
 #[derive(BinRead, BinWrite, Debug)]
@@ -158,7 +157,7 @@ impl BinWrite for GCGHeader {
         GXAttrType::write_options(&mesh.vertex_attr_type, writer, endian, ())?;
         GXCompType::write_options(&mesh.vertex_data_type, writer, endian, ())?;
         u8::write_options(&mesh.xyz_frac_bits, writer, endian, ())?;
-        
+
         if (mesh.vertex_type & 0x1) == 0x1 && (mesh.vertex_type & 0x8) == 0x8 {
           GXAttrType::write_options(&mesh.normal_attr_type.unwrap(), writer, endian, ())?;
           GXCompType::write_options(&mesh.normal_data_type.unwrap(), writer, endian, ())?;
@@ -193,22 +192,22 @@ impl BinWrite for GCGHeader {
         let mut vertex_block_size = 0;
 
         vertex_block_size += match mesh.vertex_data_type {
-          GXCompType::GX_U8 => mesh.vertex_count as usize * 3,
-          GXCompType::GX_S8 => mesh.vertex_count as usize * 3,
-          GXCompType::GX_U16 => mesh.vertex_count as usize * 6,
-          GXCompType::GX_S16 => mesh.vertex_count as usize * 6,
-          GXCompType::GX_F32 => mesh.vertex_count as usize * 12,
-          GXCompType::GX_U32 => mesh.vertex_count as usize * 12,
+          GXCompType::GxU8 => mesh.vertex_count as usize * 3,
+          GXCompType::GxS8 => mesh.vertex_count as usize * 3,
+          GXCompType::GxU16 => mesh.vertex_count as usize * 6,
+          GXCompType::GxS16 => mesh.vertex_count as usize * 6,
+          GXCompType::GxF32 => mesh.vertex_count as usize * 12,
+          GXCompType::GxU32 => mesh.vertex_count as usize * 12,
         };
 
         if (mesh.vertex_type & 0x1) == 0x1 && (mesh.vertex_type & 0x8) == 0x8 {
           vertex_block_size += match mesh.normal_data_type {
-            Some(GXCompType::GX_U8) => mesh.normal_count as usize * 3,
-            Some(GXCompType::GX_S8) => mesh.normal_count as usize * 3,
-            Some(GXCompType::GX_U16) => mesh.normal_count as usize * 6,
-            Some(GXCompType::GX_S16) => mesh.normal_count as usize * 6,
-            Some(GXCompType::GX_F32) => mesh.normal_count as usize * 12,
-            Some(GXCompType::GX_U32) => mesh.normal_count as usize * 12,
+            Some(GXCompType::GxU8) => mesh.normal_count as usize * 3,
+            Some(GXCompType::GxS8) => mesh.normal_count as usize * 3,
+            Some(GXCompType::GxU16) => mesh.normal_count as usize * 6,
+            Some(GXCompType::GxS16) => mesh.normal_count as usize * 6,
+            Some(GXCompType::GxF32) => mesh.normal_count as usize * 12,
+            Some(GXCompType::GxU32) => mesh.normal_count as usize * 12,
             None => 0,
           };
         }
@@ -219,17 +218,18 @@ impl BinWrite for GCGHeader {
 
         if (mesh.vertex_type & 0x2) == 0x2 {
           vertex_block_size += match mesh.uv_data_type {
-            GXCompType::GX_U8 => mesh.uv_count as usize * 2,
-            GXCompType::GX_S8 => mesh.uv_count as usize * 2,
-            GXCompType::GX_U16 => mesh.uv_count as usize * 4,
-            GXCompType::GX_S16 => mesh.uv_count as usize * 4,
-            GXCompType::GX_F32 => mesh.uv_count as usize * 8,
-            GXCompType::GX_U32 => mesh.uv_count as usize * 8,
+            GXCompType::GxU8 => mesh.uv_count as usize * 2,
+            GXCompType::GxS8 => mesh.uv_count as usize * 2,
+            GXCompType::GxU16 => mesh.uv_count as usize * 4,
+            GXCompType::GxS16 => mesh.uv_count as usize * 4,
+            GXCompType::GxF32 => mesh.uv_count as usize * 8,
+            GXCompType::GxU32 => mesh.uv_count as usize * 8,
           };
         }
 
         // write the vertex block (positions, normals or vertex colors, uvs)
-        let vertex_block = (&args.streaming_data[offset_in_data..offset_in_data + vertex_block_size]).to_vec();
+        let vertex_block =
+          (&args.streaming_data[offset_in_data..offset_in_data + vertex_block_size]).to_vec();
         Vec::<u8>::write_options(&vertex_block, writer, endian, ())?;
         offset_in_data = crate::round_up(offset_in_data + vertex_block_size, 32);
 

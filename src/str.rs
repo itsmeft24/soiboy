@@ -59,11 +59,11 @@ impl Str {
         Ok(SectionData { uncached, cached })
       } else {
         let mut uncached_data = vec![0u8; header.uncached_data_size as usize];
-        self.file.read(&mut uncached_data);
+        self.file.read(&mut uncached_data)?;
         let uncached = extract_components(&section.uncached_components, uncached_data);
 
         let mut cached_data = vec![0u8; header.cached_data_size as usize];
-        self.file.read(&mut cached_data);
+        self.file.read(&mut cached_data)?;
         let cached = extract_components(&section.cached_components, cached_data);
 
         Ok(SectionData { uncached, cached })
@@ -73,11 +73,11 @@ impl Str {
       self.file.seek(SeekFrom::Start(section_offset))?;
 
       let mut uncached_data = vec![0u8; header.uncached_data_size as usize];
-      self.file.read(&mut uncached_data);
+      self.file.read(&mut uncached_data)?;
       let uncached = extract_components(&section.uncached_components, uncached_data);
 
       let mut cached_data = vec![0u8; header.cached_data_size as usize];
-      self.file.read(&mut cached_data);
+      self.file.read(&mut cached_data)?;
       let cached = extract_components(&section.cached_components, cached_data);
 
       Ok(SectionData { uncached, cached })

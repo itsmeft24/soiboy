@@ -4,12 +4,12 @@ use crate::div_round_up;
 
 #[derive(BinRead, BinWrite, PartialEq, Debug, Clone)]
 #[brw(repr = u32)]
-pub(crate) enum GCTFormat {
+pub enum GCTFormat {
   Rgba8 = 0x0F,
   Cmpr = 0x29,
-  Cmpr_MM = 0x2A,
+  CmprMm = 0x2A,
   Ci8 = 0x3A,
-  Ci8_MM = 0x3B,
+  Ci8Mm = 0x3B,
   I8 = 0x3C,
 }
 
@@ -18,9 +18,9 @@ impl GCTFormat {
     match self {
       GCTFormat::Rgba8 => (4, 4),
       GCTFormat::Cmpr => (8, 8),
-      GCTFormat::Cmpr_MM => (8, 8),
+      GCTFormat::CmprMm => (8, 8),
       GCTFormat::Ci8 => (8, 4),
-      GCTFormat::Ci8_MM => (8, 4),
+      GCTFormat::Ci8Mm => (8, 4),
       GCTFormat::I8 => (8, 4),
     }
   }
@@ -28,9 +28,9 @@ impl GCTFormat {
     match self {
       GCTFormat::Rgba8 => 32,
       GCTFormat::Cmpr => 4,
-      GCTFormat::Cmpr_MM => 4,
+      GCTFormat::CmprMm => 4,
       GCTFormat::Ci8 => 8,
-      GCTFormat::Ci8_MM => 8,
+      GCTFormat::Ci8Mm => 8,
       GCTFormat::I8 => 8,
     }
   }
@@ -50,15 +50,15 @@ impl std::fmt::Display for GCTFormat {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
       GCTFormat::Rgba8 => write!(f, "Rgba8"),
-      GCTFormat::Cmpr | GCTFormat::Cmpr_MM => write!(f, "Cmpr"),
-      GCTFormat::Ci8 | GCTFormat::Ci8_MM => write!(f, "Ci8"),
+      GCTFormat::Cmpr | GCTFormat::CmprMm => write!(f, "Cmpr"),
+      GCTFormat::Ci8 | GCTFormat::Ci8Mm => write!(f, "Ci8"),
       GCTFormat::I8 => write!(f, "I8"),
     }
   }
 }
 
 #[derive(BinRead, BinWrite, Debug, Clone)]
-pub(crate) struct GCNTextureHeader {
+pub struct GCNTextureHeader {
   pub version: u32,
   pub format: GCTFormat,
   pub palette_size: u32,
@@ -72,7 +72,7 @@ pub(crate) struct GCNTextureHeader {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-pub(crate) struct GCTSurfaceHeader {
+pub struct GCTSurfaceHeader {
   pub width: u32,
   pub height: u32,
   pub size: u32,

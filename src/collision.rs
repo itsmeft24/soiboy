@@ -259,7 +259,7 @@ impl std::fmt::Display for StreamingCollisionModel {
         self.model_info.look_vector,
         self.model_info.up_vector,
         self.model_info.zone
-      );
+      )?;
     } else {
       write!(
         f,
@@ -268,10 +268,10 @@ impl std::fmt::Display for StreamingCollisionModel {
         self.model_info.position,
         self.model_info.look_vector,
         self.model_info.up_vector,
-      );
+      )?;
     }
     Ok(for param in self.parameters.iter() {
-      write!(f, "{}\n", param);
+      write!(f, "{}\n", param)?;
     })
   }
 }

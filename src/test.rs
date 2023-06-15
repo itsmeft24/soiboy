@@ -6,7 +6,7 @@ use x_flipper_360::*;
 
 use crate::textures::{GCNTextureHeader, GCTSurfaceHeader};
 use crate::ComponentKind::{self, *};
-use crate::{utils::*, GCGHeader, GCGHeaderArgs, XNGHeader};
+use crate::{GCGHeader, GCGHeaderArgs, XNGHeader};
 use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
 
 #[test]
