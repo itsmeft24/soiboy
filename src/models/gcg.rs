@@ -239,7 +239,7 @@ impl BinWrite for GCGHeader {
         Vec::<u8>::write_options(&face_chunk, writer, endian, ())?;
         offset_in_data += mesh.face_chunk_size as usize;
       }
-      println!("{}, {}", offset_in_data, args.streaming_data.len());
+      assert_eq!(offset_in_data, args.streaming_data.len());
     }
     Ok(())
   }

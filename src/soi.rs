@@ -77,7 +77,8 @@ impl std::fmt::Display for StreamingParameter {
 #[derive(BinRead, Debug)]
 pub struct StreamingTexture<TH: BinRead<Args<'static> = ()> + 'static> {
   pub model_info: ModelInfo,
-  //pub padding: u32,
+  // padding on xbox, version on wii
+  pub version: u32,
   pub header: TH,
 }
 

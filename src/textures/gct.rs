@@ -59,7 +59,6 @@ impl std::fmt::Display for GCTFormat {
 
 #[derive(BinRead, BinWrite, Debug, Clone)]
 pub struct GCNTextureHeader {
-  pub version: u32,
   pub format: GCTFormat,
   pub palette_size: u32,
 

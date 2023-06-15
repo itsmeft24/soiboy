@@ -177,10 +177,9 @@ fn process_component_wii(
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         let mut out = std::fs::File::create(path).unwrap();
 
-        // Clone the header so we can set the version back to 2 (streamed GCTs have a flag OR'd on the version)
-        let mut gct_file_header = streaming_texture.header.clone();
-        gct_file_header.version = 2;
-        gct_file_header.write_be(&mut out).unwrap();
+        // Write the version out (streamed GCTs have a flag OR'd on the version, so we set it manually to 2 [otherwise we would use streaming_texture.version])
+        u32::write_options(&2, &mut out, binrw::Endian::Big, ()).unwrap();
+        streaming_texture.header.write_be(&mut out).unwrap();
 
         // Keeps track of our position in the streaming data.
         let mut offset = 0;
