@@ -141,7 +141,9 @@ impl BinWrite for GCGHeader {
     u8::write_options(&self.num_lod, writer, endian, ())?;
     u8::write_options(&self.skin_animates_flag, writer, endian, ())?;
     u8::write_options(&self.has_weight, writer, endian, ())?;
+    u8::write_options(&self.unused, writer, endian, ())?;
     if self.has_weight != 0 {
+      u16::write_options(&self.weight_count, writer, endian, ())?;
       Vec::<GCGWeight>::write_options(&self.weights.clone().unwrap(), writer, endian, ())?;
     }
 
@@ -155,7 +157,8 @@ impl BinWrite for GCGHeader {
         u8::write_options(&(mesh.vertex_type - 0x80), writer, endian, ())?;
         GXAttrType::write_options(&mesh.vertex_attr_type, writer, endian, ())?;
         GXCompType::write_options(&mesh.vertex_data_type, writer, endian, ())?;
-
+        u8::write_options(&mesh.xyz_frac_bits, writer, endian, ())?;
+        
         if (mesh.vertex_type & 0x1) == 0x1 && (mesh.vertex_type & 0x8) == 0x8 {
           GXAttrType::write_options(&mesh.normal_attr_type.unwrap(), writer, endian, ())?;
           GXCompType::write_options(&mesh.normal_data_type.unwrap(), writer, endian, ())?;
@@ -226,10 +229,9 @@ impl BinWrite for GCGHeader {
         }
 
         // write the vertex block (positions, normals or vertex colors, uvs)
-        let vertex_block_end_offset = crate::round_up(offset_in_data + vertex_block_size, 32);
-        let vertex_block = (&args.streaming_data[offset_in_data..vertex_block_end_offset]).to_vec();
+        let vertex_block = (&args.streaming_data[offset_in_data..offset_in_data + vertex_block_size]).to_vec();
         Vec::<u8>::write_options(&vertex_block, writer, endian, ())?;
-        offset_in_data = vertex_block_end_offset;
+        offset_in_data = crate::round_up(offset_in_data + vertex_block_size, 32);
 
         let face_chunk: Vec<u8> = (&args.streaming_data
           [offset_in_data..offset_in_data + mesh.face_chunk_size as usize])
