@@ -6,7 +6,7 @@ use x_flipper_360::*;
 
 use crate::textures::{GCNTextureHeader, GCTSurfaceHeader};
 use crate::ComponentKind::{self, *};
-use crate::{utils::*, GCGHeader, XNGHeader};
+use crate::{utils::*, GCGHeader, GCGHeaderArgs, XNGHeader};
 use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
 
 #[test]
@@ -18,7 +18,6 @@ fn extract() {
   let soup = SoiSoup::<GCNTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
 
-  /*
   for (id, section) in soup.find_sections().iter().enumerate() {
     let section_data = str.read_section_data(section).unwrap();
 
@@ -30,7 +29,6 @@ fn extract() {
       process_component_wii(&soup, id as u32, component);
     }
   }
-  */
 }
 
 #[test]
@@ -133,51 +131,45 @@ fn process_component_wii(
     out.write_all(&component.data).unwrap();
   }
 
-  // if component.kind == ComponentKind::RenderableModel {
-  //   let header = soup
-  //     .find_model(section_id, component.id, component.instance_id)
-  //     .unwrap();
-  //
-  //   let path = PathBuf::from(format!(
-  //     ".\\data\\CR_03\\{}.xng",
-  //     component.path
-  //   ));
-  //   std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-  //   let mut out = std::fs::File::create(path).unwrap();
-  //   header
-  //     .streaming_model_header
-  //     .write_options(
-  //       &mut out,
-  //       binrw::Endian::Big,
-  //       &XNGHeaderArgs {
-  //         streaming_data: component.data.clone(),
-  //       },
-  //     )
-  //     .unwrap();
-  // }
-  // if component.kind == ComponentKind::CollisionModel {
-  //   let header = soup
-  //     .find_collision_model(section_id, component.id, component.instance_id)
-  //     .unwrap();
-  //
-  //   let path = PathBuf::from(format!(
-  //     ".\\data\\CR_03\\{}.gol",
-  //     component.path
-  //   ));
-  //   std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-  //   let mut out = std::fs::File::create(path).unwrap();
-  //   header
-  //     .collision_model
-  //     .write_options(
-  //       &mut out,
-  //       binrw::Endian::Big,
-  //       &CollisionModelArgs {
-  //         ror: false,
-  //         streaming_data: component.data.clone(),
-  //       },
-  //     )
-  //     .unwrap();
-  // }
+  if component.kind == ComponentKind::RenderableModel {
+    let header = soup
+      .find_model(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gcg", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header
+      .streaming_model_header
+      .write_options(
+        &mut out,
+        binrw::Endian::Big,
+        &GCGHeaderArgs {
+          streaming_data: component.data.clone(),
+        },
+      )
+      .unwrap();
+  }
+  if component.kind == ComponentKind::CollisionModel {
+    let header = soup
+      .find_collision_model(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gol", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header
+      .collision_model
+      .write_options(
+        &mut out,
+        binrw::Endian::Big,
+        &CollisionModelArgs {
+          ror: true,
+          streaming_data: component.data.clone(),
+        },
+      )
+      .unwrap();
+  }
   if component.kind == ComponentKind::Texture {
     match soup.find_streaming_texture(section_id, component.id, component.instance_id) {
       Some(streaming_texture) => {
@@ -243,7 +235,7 @@ fn process_component_wii(
   }
 }
 
-fn process_component(
+fn process_component_xbox(
   soup: &SoiSoup<TextureHeader, XNGHeader>,
   section_id: u32,
   component: ComponentData,
@@ -260,51 +252,45 @@ fn process_component(
     out.write_all(&component.data).unwrap();
   }
 
-  // if component.kind == ComponentKind::RenderableModel {
-  //   let header = soup
-  //     .find_model(section_id, component.id, component.instance_id)
-  //     .unwrap();
-  //
-  //   let path = PathBuf::from(format!(
-  //     ".\\data\\CR_03\\{}.xng",
-  //     component.path
-  //   ));
-  //   std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-  //   let mut out = std::fs::File::create(path).unwrap();
-  //   header
-  //     .streaming_model_header
-  //     .write_options(
-  //       &mut out,
-  //       binrw::Endian::Big,
-  //       &XNGHeaderArgs {
-  //         streaming_data: component.data.clone(),
-  //       },
-  //     )
-  //     .unwrap();
-  // }
-  // if component.kind == ComponentKind::CollisionModel {
-  //   let header = soup
-  //     .find_collision_model(section_id, component.id, component.instance_id)
-  //     .unwrap();
-  //
-  //   let path = PathBuf::from(format!(
-  //     ".\\data\\CR_03\\{}.gol",
-  //     component.path
-  //   ));
-  //   std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-  //   let mut out = std::fs::File::create(path).unwrap();
-  //   header
-  //     .collision_model
-  //     .write_options(
-  //       &mut out,
-  //       binrw::Endian::Big,
-  //       &CollisionModelArgs {
-  //         ror: false,
-  //         streaming_data: component.data.clone(),
-  //       },
-  //     )
-  //     .unwrap();
-  // }
+  if component.kind == ComponentKind::RenderableModel {
+    let header = soup
+      .find_model(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.xng", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header
+      .streaming_model_header
+      .write_options(
+        &mut out,
+        binrw::Endian::Big,
+        &XNGHeaderArgs {
+          streaming_data: component.data.clone(),
+        },
+      )
+      .unwrap();
+  }
+  if component.kind == ComponentKind::CollisionModel {
+    let header = soup
+      .find_collision_model(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gol", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header
+      .collision_model
+      .write_options(
+        &mut out,
+        binrw::Endian::Big,
+        &CollisionModelArgs {
+          ror: false,
+          streaming_data: component.data.clone(),
+        },
+      )
+      .unwrap();
+  }
   if component.kind == ComponentKind::Texture {
     match soup.find_streaming_texture(section_id, component.id, component.instance_id) {
       Some(header) => {

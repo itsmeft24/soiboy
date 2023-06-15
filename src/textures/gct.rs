@@ -1,5 +1,7 @@
 use binrw::*;
 
+use crate::div_round_up;
+
 #[derive(BinRead, BinWrite, PartialEq, Debug, Clone)]
 #[brw(repr = u32)]
 pub(crate) enum GCTFormat {
@@ -9,14 +11,6 @@ pub(crate) enum GCTFormat {
   Ci8 = 0x3A,
   Ci8_MM = 0x3B,
   I8 = 0x3C,
-}
-
-fn round_up(numToRound: usize, roundTo: usize) -> usize {
-  return ((numToRound + roundTo - 1) / roundTo) * roundTo;
-}
-
-fn div_round_up(numToRound: usize, roundTo: usize) -> usize {
-  return (numToRound + roundTo - 1) / roundTo;
 }
 
 impl GCTFormat {

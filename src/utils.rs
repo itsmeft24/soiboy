@@ -63,6 +63,14 @@ pub struct Vector4i16 {
   pub w: i16,
 }
 
+pub(crate) fn round_up(numToRound: usize, roundTo: usize) -> usize {
+  return ((numToRound + roundTo - 1) / roundTo) * roundTo;
+}
+
+pub(crate) fn div_round_up(numToRound: usize, roundTo: usize) -> usize {
+  return (numToRound + roundTo - 1) / roundTo;
+}
+
 pub(crate) fn clean_path(input: &[u8]) -> String {
   let mut output = String::new();
 
