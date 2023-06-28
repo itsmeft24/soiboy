@@ -98,3 +98,28 @@ impl GCNTextureHeader {
     size_bytes
   }
 }
+
+#[derive(BinRead, BinWrite)]
+pub struct GCTSurface {
+  pub header: GCTSurfaceHeader,
+
+  #[br(count = header.size)]
+  pub data: Vec<u8>,
+}
+
+#[derive(BinRead, BinWrite)]
+pub struct GCNStaticTextureHeader {
+  pub version: u32,
+  pub format: GCTFormat,
+  pub palette_size: u32,
+
+  #[br(count = palette_size * 2)]
+  pub palette: Vec<u8>,
+
+  pub mip_count: u32,
+  pub width: u32,
+  pub height: u32,
+
+  #[br(count = mip_count)]
+  pub mips: Vec<GCTSurface>
+}

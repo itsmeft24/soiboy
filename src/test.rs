@@ -6,7 +6,7 @@ use x_flipper_360::*;
 
 use crate::textures::{GCNTextureHeader, GCTSurfaceHeader};
 use crate::ComponentKind::{self, *};
-use crate::{GCGHeader, GCGHeaderArgs, XNGHeader};
+use crate::{GCGHeader, GCGHeaderArgs, XNGHeader, X360StaticTextureHeader, GCNStaticTextureHeader};
 use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
 
 #[test]
@@ -15,7 +15,7 @@ fn extract() {
   let soi_path = Path::new("./data/CR_03.gcn.soi");
   let str_path = Path::new("./data/CR_03.gcn.str");
 
-  let soup = SoiSoup::<GCNTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
+  let soup = SoiSoup::<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
 
   for (id, section) in soup.find_sections().iter().enumerate() {
@@ -36,7 +36,7 @@ fn dump_scn() {
   let toc_path = Path::new("./data/CR_03.gcn.toc");
   let soi_path = Path::new("./data/CR_03.gcn.soi");
   let str_path = Path::new("./data/CR_03.gcn.str");
-  let soup = SoiSoup::<GCNTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
+  let soup = SoiSoup::<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
   let mut str = Str::read(str_path).unwrap();
   let mut num_anim_models = 1;
   let mut num_static_models = 1;
@@ -69,10 +69,11 @@ fn dump_scn() {
 }
 
 fn print_component<
-  TH: binrw::BinRead<Args<'static> = ()> + 'static,
+  StreamingTH: binrw::BinRead<Args<'static> = ()> + 'static,
+  StaticTH: binrw::BinRead<Args<'static> = ()> + 'static,
   MH: binrw::BinRead<Args<'static> = ()> + 'static,
 >(
-  soup: &SoiSoup<TH, MH>,
+  soup: &SoiSoup<StreamingTH, StaticTH, MH>,
   section_id: u32,
   component: ComponentData,
   num_anim_models: &mut i32,
@@ -115,7 +116,7 @@ fn print_component<
 }
 
 fn process_component_wii(
-  soup: &SoiSoup<GCNTextureHeader, GCGHeader>,
+  soup: &SoiSoup<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>,
   section_id: u32,
   component: ComponentData,
 ) {
@@ -235,7 +236,7 @@ fn process_component_wii(
 }
 
 fn process_component_xbox(
-  soup: &SoiSoup<TextureHeader, XNGHeader>,
+  soup: &SoiSoup<TextureHeader, X360StaticTextureHeader, XNGHeader>,
   section_id: u32,
   component: ComponentData,
 ) {
@@ -391,7 +392,7 @@ fn process_component_xbox(
           let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
           std::fs::create_dir_all(path.parent().unwrap()).unwrap();
           let mut out = std::fs::File::create(path).unwrap();
-          out.write_all(&static_texture.header_file).unwrap();
+          out.write_all(&static_texture.static_texture_header.header_file).unwrap();
         }
         None => panic!("Failed to find texture header."),
       },

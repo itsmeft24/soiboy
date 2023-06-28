@@ -75,24 +75,22 @@ impl std::fmt::Display for StreamingParameter {
 }
 
 #[derive(BinRead, Debug)]
-pub struct StreamingTexture<TH: BinRead<Args<'static> = ()> + 'static> {
+pub struct StreamingTexture<StreamingTH: BinRead<Args<'static> = ()> + 'static> {
   pub model_info: ModelInfo,
   // padding on xbox, version on wii
   pub version: u32,
-  pub header: TH,
+  pub header: StreamingTH,
 }
 
 #[derive(BinRead, Debug)]
-pub struct StaticTexture {
+pub struct StaticTexture<StaticTH: BinRead<Args<'static> = ()> + 'static> {
   pub model_info: ModelInfo,
 
-  pub dds_size: u32,
-  #[br(count = dds_size)]
-  pub header_file: Vec<u8>,
+  pub static_texture_header: StaticTH,
 }
 
 #[derive(BinRead, Debug)]
-pub struct Soi<TH: BinRead<Args<'static> = ()> + 'static, MH: BinRead<Args<'static> = ()> + 'static>
+pub struct Soi<StreamingTH: BinRead<Args<'static> = ()> + 'static, StaticTH: BinRead<Args<'static> = ()> + 'static, MH: BinRead<Args<'static> = ()> + 'static>
 {
   pub header: Header,
 
@@ -103,10 +101,10 @@ pub struct Soi<TH: BinRead<Args<'static> = ()> + 'static, MH: BinRead<Args<'stat
   cached_page_sizes: Vec<i32>,
 
   #[br(count = header.streaming_textures)]
-  streaming_textures: Vec<StreamingTexture<TH>>,
+  streaming_textures: Vec<StreamingTexture<StreamingTH>>,
 
   #[br(count = header.static_textures)]
-  static_textures: Vec<StaticTexture>,
+  static_textures: Vec<StaticTexture<StaticTH>>,
 
   #[br(count = header.motion_packs)]
   motion_packs: Vec<StreamingMotionPack>,
@@ -119,7 +117,7 @@ pub struct Soi<TH: BinRead<Args<'static> = ()> + 'static, MH: BinRead<Args<'stat
   collision_models: Vec<StreamingCollisionModel>,
 }
 
-impl<TH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> Soi<TH, MH> {
+impl<StreamingTH: BinRead<Args<'static> = ()>, StaticTH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> Soi<StreamingTH, StaticTH, MH> {
   pub fn read(path: &Path) -> BinResult<Self> {
     let mut file = File::open(path)?;
     Self::read_file(&mut file)
@@ -129,11 +127,11 @@ impl<TH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> Soi<TH, M
     file.read_be()
   }
 
-  pub fn get_streaming_textures(&self) -> &[StreamingTexture<TH>] {
+  pub fn get_streaming_textures(&self) -> &[StreamingTexture<StreamingTH>] {
     return &self.streaming_textures;
   }
 
-  pub fn get_static_textures(&self) -> &[StaticTexture] {
+  pub fn get_static_textures(&self) -> &[StaticTexture<StaticTH>] {
     return &self.static_textures;
   }
 
@@ -149,7 +147,7 @@ impl<TH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> Soi<TH, M
     return &self.collision_models;
   }
 
-  pub fn find_static_texture(&self, section_id: u32, component_id: u32) -> Option<&StaticTexture> {
+  pub fn find_static_texture(&self, section_id: u32, component_id: u32) -> Option<&StaticTexture<StaticTH>> {
     for texture in &self.static_textures {
       let model_info = &texture.model_info;
       if model_info.section_id == section_id as i32
@@ -166,7 +164,7 @@ impl<TH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> Soi<TH, M
     &self,
     section_id: u32,
     component_id: u32,
-  ) -> Option<&StreamingTexture<TH>> {
+  ) -> Option<&StreamingTexture<StreamingTH>> {
     for texture in &self.streaming_textures {
       let model_info = &texture.model_info;
       if model_info.section_id == section_id as i32
