@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::path::Path;
 
+use binrw::Endian;
 use binrw::{BinRead, BinReaderExt, BinResult};
 
 use crate::collision::*;
@@ -90,8 +91,11 @@ pub struct StaticTexture<StaticTH: BinRead<Args<'static> = ()> + 'static> {
 }
 
 #[derive(BinRead, Debug)]
-pub struct Soi<StreamingTH: BinRead<Args<'static> = ()> + 'static, StaticTH: BinRead<Args<'static> = ()> + 'static, MH: BinRead<Args<'static> = ()> + 'static>
-{
+pub struct Soi<
+  StreamingTH: BinRead<Args<'static> = ()> + 'static,
+  StaticTH: BinRead<Args<'static> = ()> + 'static,
+  MH: BinRead<Args<'static> = ()> + 'static,
+> {
   pub header: Header,
 
   #[br(count = header.uncached_pages)]
@@ -117,14 +121,19 @@ pub struct Soi<StreamingTH: BinRead<Args<'static> = ()> + 'static, StaticTH: Bin
   collision_models: Vec<StreamingCollisionModel>,
 }
 
-impl<StreamingTH: BinRead<Args<'static> = ()>, StaticTH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> Soi<StreamingTH, StaticTH, MH> {
-  pub fn read(path: &Path) -> BinResult<Self> {
+impl<
+    StreamingTH: BinRead<Args<'static> = ()>,
+    StaticTH: BinRead<Args<'static> = ()>,
+    MH: BinRead<Args<'static> = ()>,
+  > Soi<StreamingTH, StaticTH, MH>
+{
+  pub fn read(path: &Path, endian: Endian) -> BinResult<Self> {
     let mut file = File::open(path)?;
-    Self::read_file(&mut file)
+    Self::read_file(&mut file, endian)
   }
 
-  pub fn read_file(file: &mut File) -> BinResult<Self> {
-    file.read_be()
+  pub fn read_file(file: &mut File, endian: Endian) -> BinResult<Self> {
+    file.read_type(endian)
   }
 
   pub fn get_streaming_textures(&self) -> &[StreamingTexture<StreamingTH>] {
@@ -147,7 +156,11 @@ impl<StreamingTH: BinRead<Args<'static> = ()>, StaticTH: BinRead<Args<'static> =
     return &self.collision_models;
   }
 
-  pub fn find_static_texture(&self, section_id: u32, component_id: u32) -> Option<&StaticTexture<StaticTH>> {
+  pub fn find_static_texture(
+    &self,
+    section_id: u32,
+    component_id: u32,
+  ) -> Option<&StaticTexture<StaticTH>> {
     for texture in &self.static_textures {
       let model_info = &texture.model_info;
       if model_info.section_id == section_id as i32

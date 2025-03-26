@@ -1,4 +1,6 @@
-mod gct;
 mod dds;
-pub use self::gct::*;
+mod dxt;
+mod gct;
 pub use self::dds::*;
+pub use self::dxt::*;
+pub use self::gct::*;

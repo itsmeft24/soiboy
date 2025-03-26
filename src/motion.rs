@@ -1,8 +1,6 @@
 use binrw::{BinRead, BinWrite};
 
 #[derive(BinRead, BinWrite, Debug)]
-#[br(big)]
-#[bw(big)]
 struct MotionPackString {
   len: u32,
 
@@ -11,8 +9,6 @@ struct MotionPackString {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[br(big)]
-#[bw(big)]
 pub struct StreamingMotionPackHeader {
   version: i32,
   motion_type: i32,

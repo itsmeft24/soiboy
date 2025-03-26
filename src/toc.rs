@@ -109,6 +109,11 @@ impl Toc {
     Self::read_file(&mut file, is_new)
   }
 
+  pub fn read_le(path: &Path, is_new: bool) -> BinResult<Self> {
+    let mut file = File::open(path)?;
+    Self::read_file_le(&mut file, is_new)
+  }
+
   pub fn read_file(file: &mut File, is_new: bool) -> BinResult<Self> {
     let mut sections = Vec::new();
     let file_size = file.metadata()?.len();
@@ -118,6 +123,21 @@ impl Toc {
       // hack that allows newer SOI packages to load
       let read_zlib_header = !is_new;
       let section = Section::read_be_args(file, binrw::args! {read_zlib_header})?;
+      sections.push(section);
+    }
+
+    Ok(Self { sections })
+  }
+
+  pub fn read_file_le(file: &mut File, is_new: bool) -> BinResult<Self> {
+    let mut sections = Vec::new();
+    let file_size = file.metadata()?.len();
+
+    // read sections until the end of the file is reached
+    while file.stream_position()? < file_size {
+      // hack that allows newer SOI packages to load
+      let read_zlib_header = !is_new;
+      let section = Section::read_le_args(file, binrw::args! {read_zlib_header})?;
       sections.push(section);
     }
 

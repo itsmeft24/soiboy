@@ -1,10 +1,10 @@
 use std::path::Path;
 
-use binrw::{BinRead, BinResult};
+use binrw::{BinRead, BinResult, Endian};
 
 use crate::{
   ComponentHeader, Section, Soi, StaticTexture, StreamingCollisionModel, StreamingMotionPack,
-  StreamingRenderableModel, StreamingTexture, Toc,
+  StreamingRenderableModel, StreamingTexture, Toc, X360StaticTextureHeader, XNGHeader,
 };
 
 pub struct SoiSoup<
@@ -16,9 +16,14 @@ pub struct SoiSoup<
   soi: Soi<StreamingTH, StaticTH, MH>,
 }
 
-impl<StreamingTH: BinRead<Args<'static> = ()>, StaticTH: BinRead<Args<'static> = ()>, MH: BinRead<Args<'static> = ()>> SoiSoup<StreamingTH, StaticTH, MH> {
-  pub fn cook(toc_path: &Path, soi_path: &Path) -> BinResult<Self> {
-    let soi = Soi::read(soi_path)?;
+impl<
+    StreamingTH: BinRead<Args<'static> = ()>,
+    StaticTH: BinRead<Args<'static> = ()>,
+    MH: BinRead<Args<'static> = ()>,
+  > SoiSoup<StreamingTH, StaticTH, MH>
+{
+  pub fn cook(toc_path: &Path, soi_path: &Path, endian: Endian) -> BinResult<Self> {
+    let soi = Soi::read(soi_path, endian)?;
     let toc = Toc::read(toc_path, soi.header.version == 0x101)?;
 
     Ok(Self { toc, soi })

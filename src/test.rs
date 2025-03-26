@@ -6,37 +6,75 @@ use x_flipper_360::*;
 
 use crate::textures::{GCNTextureHeader, GCTSurfaceHeader};
 use crate::ComponentKind::{self, *};
-use crate::{GCGHeader, GCGHeaderArgs, XNGHeader, X360StaticTextureHeader, GCNStaticTextureHeader};
+use crate::{
+  utils, DXGHeader, DXGHeaderArgs, DXTStaticTextureHeader, DXTTextureHeader, GCGHeader,
+  GCGHeaderArgs, GCNStaticTextureHeader, Res, X360StaticTextureHeader, XNGHeader,
+};
 use crate::{CollisionModelArgs, ComponentData, SoiSoup, Str, XNGHeaderArgs};
+
+pub type XboxSoiSoup = SoiSoup<DXTTextureHeader, DXTStaticTextureHeader, DXGHeader>;
+pub type X360SoiSoup = SoiSoup<TextureHeader, X360StaticTextureHeader, XNGHeader>;
+pub type WiiSoiSoup = SoiSoup<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>;
 
 #[test]
 fn extract() {
-  let toc_path = Path::new("./data/CR_03.gcn.toc");
-  let soi_path = Path::new("./data/CR_03.gcn.soi");
-  let str_path = Path::new("./data/CR_03.gcn.str");
+  let res_path = Path::new("./data/FE.xbox.res");
+  let str_path = Path::new("./data/FE.xbox.str");
 
-  let soup = SoiSoup::<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
+  let res = Res::read(res_path).unwrap();
+
+  let toc_path = Path::new("./data/FE.xbox.toc");
+  let soi_path = Path::new("./data/FE.xbox.soi");
+
+  let toc_bytes = res.get_file("FE.xbox.toc".to_owned()).unwrap();
+  std::fs::File::create(toc_path)
+    .unwrap()
+    .write_all(toc_bytes)
+    .unwrap();
+  let toc_bytes = res.get_file("FE.xbox.soi".to_owned()).unwrap();
+  std::fs::File::create(soi_path)
+    .unwrap()
+    .write_all(toc_bytes)
+    .unwrap();
+
+  let soup = XboxSoiSoup::cook(toc_path, soi_path, binrw::Endian::Little).unwrap();
   let mut str = Str::read(str_path).unwrap();
 
   for (id, section) in soup.find_sections().iter().enumerate() {
     let section_data = str.read_section_data(section).unwrap();
 
     for component in section_data.uncached {
-      process_component_wii(&soup, id as u32, component);
+      process_component_xbox(&soup, id as u32, component);
     }
 
     for component in section_data.cached {
-      process_component_wii(&soup, id as u32, component);
+      process_component_xbox(&soup, id as u32, component);
     }
   }
 }
 
 #[test]
 fn dump_scn() {
-  let toc_path = Path::new("./data/CR_03.gcn.toc");
-  let soi_path = Path::new("./data/CR_03.gcn.soi");
-  let str_path = Path::new("./data/CR_03.gcn.str");
-  let soup = SoiSoup::<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>::cook(toc_path, soi_path).unwrap();
+  let res_path = Path::new("./data/FE.xbox.res");
+  let str_path = Path::new("./data/FE.xbox.str");
+
+  let res = Res::read(res_path).unwrap();
+
+  let toc_path = Path::new("./data/FE.xbox.toc");
+  let soi_path = Path::new("./data/FE.xbox.soi");
+
+  let toc_bytes = res.get_file("FE.xbox.toc".to_owned()).unwrap();
+  std::fs::File::create(toc_path)
+    .unwrap()
+    .write_all(toc_bytes)
+    .unwrap();
+  let toc_bytes = res.get_file("FE.xbox.soi".to_owned()).unwrap();
+  std::fs::File::create(soi_path)
+    .unwrap()
+    .write_all(toc_bytes)
+    .unwrap();
+
+  let soup = XboxSoiSoup::cook(toc_path, soi_path, binrw::Endian::Little).unwrap();
   let mut str = Str::read(str_path).unwrap();
   let mut num_anim_models = 1;
   let mut num_static_models = 1;
@@ -115,20 +153,16 @@ fn print_component<
   }
 }
 
-fn process_component_wii(
-  soup: &SoiSoup<GCNTextureHeader, GCNStaticTextureHeader, GCGHeader>,
-  section_id: u32,
-  component: ComponentData,
-) {
+fn process_component_wii(soup: &WiiSoiSoup, section_id: u32, component: ComponentData) {
   if component.kind == ComponentKind::MotionPack {
     let header = soup
       .find_motion_pack(section_id, component.id, component.instance_id)
       .unwrap();
 
-    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.got", component.path));
+    let path = PathBuf::from(format!("./data/FE/{}.got", component.path));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
-    header.header.write(&mut out).unwrap();
+    header.header.write_be(&mut out).unwrap();
     out.write_all(&component.data).unwrap();
   }
 
@@ -137,7 +171,7 @@ fn process_component_wii(
       .find_model(section_id, component.id, component.instance_id)
       .unwrap();
 
-    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gcg", component.path));
+    let path = PathBuf::from(format!("./data/FE/{}.gcg", component.path));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
     header
@@ -156,7 +190,7 @@ fn process_component_wii(
       .find_collision_model(section_id, component.id, component.instance_id)
       .unwrap();
 
-    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gol", component.path));
+    let path = PathBuf::from(format!("./data/FE/{}.gol", component.path));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
     header
@@ -174,7 +208,7 @@ fn process_component_wii(
   if component.kind == ComponentKind::Texture {
     match soup.find_streaming_texture(section_id, component.id, component.instance_id) {
       Some(streaming_texture) => {
-        let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gct", component.path));
+        let path = PathBuf::from(format!("./data/FE/{}.gct", component.path));
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         let mut out = std::fs::File::create(path).unwrap();
 
@@ -235,20 +269,16 @@ fn process_component_wii(
   }
 }
 
-fn process_component_xbox(
-  soup: &SoiSoup<TextureHeader, X360StaticTextureHeader, XNGHeader>,
-  section_id: u32,
-  component: ComponentData,
-) {
+fn process_component_xbox(soup: &XboxSoiSoup, section_id: u32, component: ComponentData) {
   if component.kind == ComponentKind::MotionPack {
     let header = soup
       .find_motion_pack(section_id, component.id, component.instance_id)
       .unwrap();
 
-    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.got", component.path));
+    let path = PathBuf::from(format!("./data/FE/{}.mot", component.path));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
-    header.header.write(&mut out).unwrap();
+    header.header.write_le(&mut out).unwrap();
     out.write_all(&component.data).unwrap();
   }
 
@@ -257,7 +287,123 @@ fn process_component_xbox(
       .find_model(section_id, component.id, component.instance_id)
       .unwrap();
 
-    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.xng", component.path));
+    let path = PathBuf::from(format!("./data/FE/{}.dxg", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header
+      .streaming_model_header
+      .write_options(
+        &mut out,
+        binrw::Endian::Little,
+        &DXGHeaderArgs {
+          streaming_data: component.data.clone(),
+        },
+      )
+      .unwrap();
+  }
+  if component.kind == ComponentKind::CollisionModel {
+    let header = soup
+      .find_collision_model(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!("./data/FE/{}.col", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header
+      .collision_model
+      .write_options(
+        &mut out,
+        binrw::Endian::Little,
+        &CollisionModelArgs {
+          ror: false,
+          streaming_data: component.data.clone(),
+        },
+      )
+      .unwrap();
+  }
+  if component.kind == ComponentKind::Texture {
+    match soup.find_streaming_texture(section_id, component.id, component.instance_id) {
+      Some(streaming_texture) => {
+        let path = PathBuf::from(format!("./data/FE/{}.dxt", component.path));
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let mut out = std::fs::File::create(path).unwrap();
+
+        // Write the version out (streamed GCTs have a flag OR'd on the version, so we set it manually to 2 [otherwise we would use streaming_texture.version])
+        u32::write_options(&2, &mut out, binrw::Endian::Little, ()).unwrap();
+        streaming_texture.header.write_le(&mut out).unwrap();
+
+        // Keeps track of our position in the streaming data.
+        let mut offset = 0;
+        let mip_count = streaming_texture.header.mip_count;
+
+        // Holds the offsets and sizes (in a Range<usize>) for each mip so we can iterate backwards over this later
+        let mut mips = Vec::with_capacity(mip_count as usize);
+
+        // Since mips are stored in forwards order (biggest to smallest) in the streaming data we need to first collect them in the vec,
+        for i in 0..mip_count {
+          let mip_width = 1.max(streaming_texture.header.width as usize / (2 as usize).pow(i));
+          let mip_height = 1.max(streaming_texture.header.height as usize / (2 as usize).pow(i));
+
+          let mip_size = streaming_texture
+            .header
+            .format
+            .calculate_mip_size(mip_width, mip_height);
+
+          mips.push(offset..offset + mip_size);
+
+          offset += mip_size as usize;
+        }
+
+        // (At this point, we should have read through the entire streaming data)
+        assert_eq!(offset, streaming_texture.header.calculate_image_size());
+        assert_eq!(offset, component.data.len());
+
+        // and we can then terate over the mips in backwards order and write them to the GCT.
+        for i in (0..mip_count).rev() {
+          let mip_width = 1.max(streaming_texture.header.width as usize / (2 as usize).pow(i));
+          let mip_height = 1.max(streaming_texture.header.height as usize / (2 as usize).pow(i));
+
+          let surface_header = GCTSurfaceHeader {
+            width: mip_width as u32,
+            height: mip_height as u32,
+            size: streaming_texture
+              .header
+              .format
+              .calculate_mip_size(mip_width, mip_height) as u32,
+          };
+          surface_header.write_le(&mut out).unwrap();
+
+          component.data[mips.get(i as usize).unwrap().clone()]
+            .write(&mut out)
+            .unwrap();
+        }
+      }
+      None => {
+        panic!("Failed to find texture header.");
+      }
+    }
+  }
+}
+
+fn process_component_xbox360(soup: &X360SoiSoup, section_id: u32, component: ComponentData) {
+  if component.kind == ComponentKind::MotionPack {
+    let header = soup
+      .find_motion_pack(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!("./data/FE/{}.got", component.path));
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    header.header.write_be(&mut out).unwrap();
+    out.write_all(&component.data).unwrap();
+  }
+
+  if component.kind == ComponentKind::RenderableModel {
+    let header = soup
+      .find_model(section_id, component.id, component.instance_id)
+      .unwrap();
+
+    let path = PathBuf::from(format!("./data/FE/{}.xng", component.path));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
     header
@@ -276,7 +422,7 @@ fn process_component_xbox(
       .find_collision_model(section_id, component.id, component.instance_id)
       .unwrap();
 
-    let path = PathBuf::from(format!(".\\data\\CR_03\\{}.gol", component.path));
+    let path = PathBuf::from(format!("./data/FE/{}.gol", component.path));
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
     header
@@ -314,7 +460,7 @@ fn process_component_xbox(
               mip_address: metadata.mip_address(),
             };
 
-            let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
+            let path = PathBuf::from(format!("./data/FE/{}.dds", component.path));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             let mut out = std::fs::File::create(path).unwrap();
             x_flipper_360::convert_to_dds(&config, &component.data, &mut out).unwrap();
@@ -336,7 +482,7 @@ fn process_component_xbox(
               mip_address: metadata.mip_address(),
             };
 
-            let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
+            let path = PathBuf::from(format!("./data/FE/{}.dds", component.path));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             let mut out = std::fs::File::create(path).unwrap();
             x_flipper_360::convert_to_dds(&config, &component.data, &mut out).unwrap();
@@ -358,7 +504,7 @@ fn process_component_xbox(
               mip_address: metadata.mip_address(),
             };
 
-            let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
+            let path = PathBuf::from(format!("./data/FE/{}.dds", component.path));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             let mut out = std::fs::File::create(path).unwrap();
             x_flipper_360::convert_to_dds(&config, &component.data, &mut out).unwrap();
@@ -380,7 +526,7 @@ fn process_component_xbox(
               mip_address: metadata.mip_address(),
             };
 
-            let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
+            let path = PathBuf::from(format!("./data/FE/{}.dds", component.path));
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             let mut out = std::fs::File::create(path).unwrap();
             x_flipper_360::convert_to_dds(&config, &component.data, &mut out).unwrap();
@@ -389,12 +535,14 @@ fn process_component_xbox(
       }
       None => match soup.find_static_texture(section_id, component.id, component.instance_id) {
         Some(static_texture) => {
-          let path = PathBuf::from(format!(".\\data\\CR_03\\{}.dds", component.path));
+          let path = PathBuf::from(format!("./data/FE/{}.dds", component.path));
           std::fs::create_dir_all(path.parent().unwrap()).unwrap();
           let mut out = std::fs::File::create(path).unwrap();
-          out.write_all(&static_texture.static_texture_header.header_file).unwrap();
+          out
+            .write_all(&static_texture.static_texture_header.header_file)
+            .unwrap();
         }
-        None => panic!("Failed to find texture header."),
+        None => println!("Failed to find texture header."),
       },
     }
   }

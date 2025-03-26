@@ -43,7 +43,6 @@ impl std::fmt::Display for CollisionType {
 }
 
 #[derive(Default, BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct TreeFace {
   volume: f32,
   vectors: [Vector3; 2],
@@ -51,7 +50,6 @@ struct TreeFace {
 }
 
 #[derive(Default, BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct RaceORamaStreamingDataTreeFace {
   vectors: [Vector4; 2],
   type_indices: [i16; 2],
@@ -82,7 +80,6 @@ impl RaceORamaStreamingDataTreeFace {
 }
 
 #[derive(Default, BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct StreamingDataTreeFace {
   volume: f32,
   radius: f32,
@@ -101,7 +98,6 @@ impl StreamingDataTreeFace {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct TreeFaceLeaf {
   dvalue: f32,
   vector: Vector3,
@@ -109,7 +105,6 @@ struct TreeFaceLeaf {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct RaceORamaStreamingDataTreeFaceLeaf {
   vector: Vector4,
   dvalue: f32,
@@ -132,7 +127,6 @@ impl RaceORamaStreamingDataTreeFaceLeaf {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct StreamingDataTreeFaceLeaf {
   vertices: [i16; 3],
   unknown1: f32,
@@ -164,7 +158,6 @@ impl StreamingDataTreeFaceLeaf {
 }
 
 #[derive(Default, BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct SoultreeCollisionObject {
   temp_cmt: i32,
 
@@ -196,7 +189,6 @@ struct SoultreeCollisionObject {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct FinitePlaneStruct {
   local_vertex_bl: Vector3,
   local_vertex_br: Vector3,
@@ -206,16 +198,14 @@ struct FinitePlaneStruct {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 struct StreamingHeirarchyEntry {
   object_id: i32,
   object: SoultreeCollisionObject,
 }
 
 #[derive(BinRead, Debug)]
-#[brw(big)]
-#[br(magic = b"\x00\x00\x04\xD2")]
 pub struct CollisionModel {
+  magic: u32,
   col_type: [u8; 4],
   version: i32,
   collision_type: CollisionType,
@@ -294,8 +284,7 @@ impl BinWrite for CollisionModel {
     endian: Endian,
     args: Self::Args<'_>,
   ) -> BinResult<()> {
-    let magic = b"\x00\x00\x04\xD2".to_vec();
-    Vec::<u8>::write_options(&magic, writer, endian, ())?;
+    u32::write_options(&1234, writer, endian, ())?;
     self.col_type.write_options(writer, endian, ())?;
     i32::write_options(&self.version, writer, endian, ())?;
 
@@ -333,7 +322,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let vertices = Vec::<Vector4>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(self.object.vertex_count as usize)
                 .finalize(),
@@ -355,7 +344,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             global_vertices = Vec::<Vector3>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(self.object.vertex_count as usize)
                 .finalize(),
@@ -376,7 +365,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let vertices = Vec::<Vector4i16>::read_options(
               &mut cursor,
-              Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(self.object.vertex_count as usize)
                 .finalize(),
@@ -398,7 +387,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let quantized_vertices = Vec::<Vector3i16>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(self.object.vertex_count as usize)
                 .finalize(),
@@ -429,7 +418,7 @@ impl BinWrite for CollisionModel {
               cursor.set_position(offset_in_data as u64);
               let normals = Vec::<Vector4>::read_options(
                 &mut cursor,
-                binrw::Endian::Big,
+                endian,
                 binrw::VecArgs::builder()
                   .count(self.object.vertex_count as usize)
                   .finalize(),
@@ -461,7 +450,7 @@ impl BinWrite for CollisionModel {
               cursor.set_position(offset_in_data as u64);
               let normals = Vec::<Vector4i16>::read_options(
                 &mut cursor,
-                binrw::Endian::Big,
+                endian,
                 binrw::VecArgs::builder()
                   .count(self.object.vertex_count as usize)
                   .finalize(),
@@ -497,7 +486,7 @@ impl BinWrite for CollisionModel {
           cursor.set_position(offset_in_data as u64);
           let ror_tree_faces = Vec::<RaceORamaStreamingDataTreeFace>::read_options(
             &mut cursor,
-            binrw::Endian::Big,
+            endian,
             binrw::VecArgs::builder()
               .count(self.object.tree_face_count as usize)
               .finalize(),
@@ -516,7 +505,7 @@ impl BinWrite for CollisionModel {
           cursor.set_position(offset_in_data as u64);
           let mn_tree_faces = Vec::<StreamingDataTreeFace>::read_options(
             &mut cursor,
-            binrw::Endian::Big,
+            endian,
             binrw::VecArgs::builder()
               .count(self.object.tree_face_count as usize)
               .finalize(),
@@ -536,7 +525,7 @@ impl BinWrite for CollisionModel {
           cursor.set_position(offset_in_data as u64);
           let ror_face_leaves = Vec::<RaceORamaStreamingDataTreeFaceLeaf>::read_options(
             &mut cursor,
-            binrw::Endian::Big,
+            endian,
             binrw::VecArgs::builder()
               .count(self.object.tree_face_leaf_count as usize)
               .finalize(),
@@ -555,7 +544,7 @@ impl BinWrite for CollisionModel {
           cursor.set_position(offset_in_data as u64);
           let mn_face_leaves = Vec::<StreamingDataTreeFaceLeaf>::read_options(
             &mut cursor,
-            binrw::Endian::Big,
+            endian,
             binrw::VecArgs::builder()
               .count(self.object.tree_face_leaf_count as usize)
               .finalize(),
@@ -595,7 +584,7 @@ impl BinWrite for CollisionModel {
               cursor.set_position(offset_in_data as u64);
               let vertices = Vec::<Vector4>::read_options(
                 &mut cursor,
-                binrw::Endian::Big,
+                endian,
                 binrw::VecArgs::builder()
                   .count(object.object.vertex_count as usize)
                   .finalize(),
@@ -617,7 +606,7 @@ impl BinWrite for CollisionModel {
               cursor.set_position(offset_in_data as u64);
               global_vertices = Vec::<Vector3>::read_options(
                 &mut cursor,
-                binrw::Endian::Big,
+                endian,
                 binrw::VecArgs::builder()
                   .count(object.object.vertex_count as usize)
                   .finalize(),
@@ -638,7 +627,7 @@ impl BinWrite for CollisionModel {
               cursor.set_position(offset_in_data as u64);
               let vertices = Vec::<Vector4i16>::read_options(
                 &mut cursor,
-                binrw::Endian::Big,
+                endian,
                 binrw::VecArgs::builder()
                   .count(object.object.vertex_count as usize)
                   .finalize(),
@@ -660,7 +649,7 @@ impl BinWrite for CollisionModel {
               cursor.set_position(offset_in_data as u64);
               let quantized_vertices = Vec::<Vector3i16>::read_options(
                 &mut cursor,
-                binrw::Endian::Big,
+                endian,
                 binrw::VecArgs::builder()
                   .count(object.object.vertex_count as usize)
                   .finalize(),
@@ -691,7 +680,7 @@ impl BinWrite for CollisionModel {
                 cursor.set_position(offset_in_data as u64);
                 let normals = Vec::<Vector4>::read_options(
                   &mut cursor,
-                  binrw::Endian::Big,
+                  endian,
                   binrw::VecArgs::builder()
                     .count(object.object.vertex_count as usize)
                     .finalize(),
@@ -723,7 +712,7 @@ impl BinWrite for CollisionModel {
                 cursor.set_position(offset_in_data as u64);
                 let normals = Vec::<Vector4i16>::read_options(
                   &mut cursor,
-                  binrw::Endian::Big,
+                  endian,
                   binrw::VecArgs::builder()
                     .count(object.object.vertex_count as usize)
                     .finalize(),
@@ -759,7 +748,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let ror_tree_faces = Vec::<RaceORamaStreamingDataTreeFace>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(object.object.tree_face_count as usize)
                 .finalize(),
@@ -778,7 +767,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let mn_tree_faces = Vec::<StreamingDataTreeFace>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(object.object.tree_face_count as usize)
                 .finalize(),
@@ -798,7 +787,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let ror_face_leaves = Vec::<RaceORamaStreamingDataTreeFaceLeaf>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(object.object.tree_face_leaf_count as usize)
                 .finalize(),
@@ -817,7 +806,7 @@ impl BinWrite for CollisionModel {
             cursor.set_position(offset_in_data as u64);
             let mn_face_leaves = Vec::<StreamingDataTreeFaceLeaf>::read_options(
               &mut cursor,
-              binrw::Endian::Big,
+              endian,
               binrw::VecArgs::builder()
                 .count(object.object.tree_face_leaf_count as usize)
                 .finalize(),

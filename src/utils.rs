@@ -1,7 +1,6 @@
 use binrw::{BinRead, BinWrite};
 
 #[derive(Default, BinRead, BinWrite, Debug)]
-#[brw(big)]
 pub struct Vector4 {
   pub x: f32,
   pub y: f32,
@@ -20,7 +19,6 @@ impl std::fmt::Display for Vector4 {
 }
 
 #[derive(Default, BinRead, BinWrite, Debug, Clone, Copy)]
-#[brw(big)]
 pub struct Vector3 {
   pub x: f32,
   pub y: f32,

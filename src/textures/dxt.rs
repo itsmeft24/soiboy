@@ -4,34 +4,46 @@ use crate::div_round_up;
 
 #[derive(BinRead, BinWrite, PartialEq, Debug, Clone)]
 #[brw(repr = u32)]
-pub enum GCTFormat {
-  Rgba8 = 0x0F,
-  Cmpr = 0x29,
-  CmprMm = 0x2A,
-  Ci8 = 0x3A,
-  Ci8Mm = 0x3B,
-  I8 = 0x3C,
+pub enum DXTFormat {
+  Dxt1 = 37,
+  Dxt1Mm = 38,
+  Dxt2 = 47,
+  Dxt2Mm = 48,
+  Dxt3 = 49,
+  Dxt3Mm = 50,
+  Dxt4 = 51,
+  Dxt4Mm = 52,
+  Dxt5 = 53,
+  Dxt5Mm = 54,
+  Pal8 = 55,
+  Pal8Mm = 56,
+  Lum8 = 57,
 }
 
-impl GCTFormat {
+impl DXTFormat {
   pub fn get_block_dim(&self) -> (usize, usize) {
     match self {
-      GCTFormat::Rgba8 => (4, 4),
-      GCTFormat::Cmpr => (8, 8),
-      GCTFormat::CmprMm => (8, 8),
-      GCTFormat::Ci8 => (8, 4),
-      GCTFormat::Ci8Mm => (8, 4),
-      GCTFormat::I8 => (8, 4),
+      DXTFormat::Pal8 => (1, 1),
+      DXTFormat::Pal8Mm => (1, 1),
+      DXTFormat::Lum8 => (1, 1),
+      _ => (4, 4),
     }
   }
   pub fn get_bits_per_pixel(&self) -> usize {
     match self {
-      GCTFormat::Rgba8 => 32,
-      GCTFormat::Cmpr => 4,
-      GCTFormat::CmprMm => 4,
-      GCTFormat::Ci8 => 8,
-      GCTFormat::Ci8Mm => 8,
-      GCTFormat::I8 => 8,
+      DXTFormat::Dxt1 => 4,
+      DXTFormat::Dxt1Mm => 4,
+      DXTFormat::Dxt2 => 8,
+      DXTFormat::Dxt2Mm => 8,
+      DXTFormat::Dxt3 => 8,
+      DXTFormat::Dxt3Mm => 8,
+      DXTFormat::Dxt4 => 4,
+      DXTFormat::Dxt4Mm => 4,
+      DXTFormat::Dxt5 => 8,
+      DXTFormat::Dxt5Mm => 8,
+      DXTFormat::Pal8 => 8,
+      DXTFormat::Pal8Mm => 8,
+      DXTFormat::Lum8 => 8,
     }
   }
   pub fn calculate_mip_size(&self, width: usize, height: usize) -> usize {
@@ -46,20 +58,23 @@ impl GCTFormat {
   }
 }
 
-impl std::fmt::Display for GCTFormat {
+impl std::fmt::Display for DXTFormat {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      GCTFormat::Rgba8 => write!(f, "Rgba8"),
-      GCTFormat::Cmpr | GCTFormat::CmprMm => write!(f, "Cmpr"),
-      GCTFormat::Ci8 | GCTFormat::Ci8Mm => write!(f, "Ci8"),
-      GCTFormat::I8 => write!(f, "I8"),
+      DXTFormat::Dxt1 | DXTFormat::Dxt1Mm => write!(f, "Dxt1"),
+      DXTFormat::Dxt2 | DXTFormat::Dxt2Mm => write!(f, "Dxt2"),
+      DXTFormat::Dxt3 | DXTFormat::Dxt3Mm => write!(f, "Dxt3"),
+      DXTFormat::Dxt4 | DXTFormat::Dxt4Mm => write!(f, "Dxt4"),
+      DXTFormat::Dxt5 | DXTFormat::Dxt5Mm => write!(f, "Dxt5"),
+      DXTFormat::Pal8 | DXTFormat::Pal8Mm => write!(f, "Pal8"),
+      DXTFormat::Lum8 => write!(f, "Lum8"),
     }
   }
 }
 
 #[derive(BinRead, BinWrite, Debug, Clone)]
-pub struct GCNTextureHeader {
-  pub format: GCTFormat,
+pub struct DXTTextureHeader {
+  pub format: DXTFormat,
   pub palette_size: u32,
 
   #[br(count = palette_size * 2)]
@@ -71,13 +86,13 @@ pub struct GCNTextureHeader {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-pub struct GCTSurfaceHeader {
+pub struct DXTSurfaceHeader {
   pub width: u32,
   pub height: u32,
   pub size: u32,
 }
 
-impl GCNTextureHeader {
+impl DXTTextureHeader {
   pub fn calculate_image_size(&self) -> usize {
     let (blk_width_pixels, blk_height_pixels) = self.format.get_block_dim();
     let bits_per_pixel = self.format.get_bits_per_pixel();
@@ -100,17 +115,17 @@ impl GCNTextureHeader {
 }
 
 #[derive(BinRead, BinWrite)]
-pub struct GCTSurface {
-  pub header: GCTSurfaceHeader,
+pub struct DXTSurface {
+  pub header: DXTSurfaceHeader,
 
   #[br(count = header.size)]
   pub data: Vec<u8>,
 }
 
 #[derive(BinRead, BinWrite)]
-pub struct GCNStaticTextureHeader {
+pub struct DXTStaticTextureHeader {
   pub version: u32,
-  pub format: GCTFormat,
+  pub format: DXTFormat,
   pub palette_size: u32,
 
   #[br(count = palette_size * 2)]
@@ -121,5 +136,5 @@ pub struct GCNStaticTextureHeader {
   pub height: u32,
 
   #[br(count = mip_count)]
-  pub mips: Vec<GCTSurface>,
+  pub mips: Vec<DXTSurface>,
 }

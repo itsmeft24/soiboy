@@ -1,6 +1,7 @@
 pub use crate::collision::*;
 pub use crate::models::*;
 pub use crate::motion::*;
+pub use crate::res::*;
 pub use crate::soi::*;
 pub use crate::soi_soup::*;
 pub use crate::str::*;
@@ -11,6 +12,7 @@ pub use crate::utils::*;
 mod collision;
 mod models;
 mod motion;
+mod res;
 mod soi;
 mod soi_soup;
 mod str;

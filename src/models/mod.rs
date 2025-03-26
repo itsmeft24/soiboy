@@ -1,3 +1,4 @@
+mod dxg;
 mod gcg;
 mod xng;
 use binrw::BinRead;
@@ -5,6 +6,7 @@ use binrw::BinWrite;
 
 use crate::clean_string;
 
+pub use self::dxg::*;
 pub use self::gcg::*;
 pub use self::xng::*;
 
@@ -47,14 +49,12 @@ impl<MH: BinRead<Args<'static> = ()>> std::fmt::Display for StreamingRenderableM
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 pub struct MeshName {
   #[br(count = 64)]
   name: Vec<u8>,
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(big)]
 pub struct Bone {
   name: [u8; 128],
   matrix: [f32; 16],
