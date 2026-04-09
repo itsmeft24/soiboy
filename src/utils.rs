@@ -1,7 +1,6 @@
 use binrw::{BinRead, BinWrite};
 
 #[derive(Default, BinRead, BinWrite, Debug)]
-#[brw(big)]
 pub struct Vector4 {
   pub x: f32,
   pub y: f32,
@@ -20,7 +19,6 @@ impl std::fmt::Display for Vector4 {
 }
 
 #[derive(Default, BinRead, BinWrite, Debug, Clone, Copy)]
-#[brw(big)]
 pub struct Vector3 {
   pub x: f32,
   pub y: f32,
@@ -63,7 +61,15 @@ pub struct Vector4i16 {
   pub w: i16,
 }
 
-pub(crate) fn clean_path(input: &[u8]) -> String {
+pub fn round_up(num_to_round: usize, round_to: usize) -> usize {
+  return ((num_to_round + round_to - 1) / round_to) * round_to;
+}
+
+pub fn div_round_up(num_to_round: usize, round_to: usize) -> usize {
+  return (num_to_round + round_to - 1) / round_to;
+}
+
+pub fn clean_path(input: &[u8]) -> String {
   let mut output = String::new();
 
   for c in input {

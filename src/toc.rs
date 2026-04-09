@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Seek;
 use std::path::Path;
 
-use binrw::{BinRead, BinResult};
+use binrw::{BinRead, BinResult, Endian};
 
 use crate::utils::clean_path;
 
@@ -104,12 +104,12 @@ pub struct Toc {
 }
 
 impl Toc {
-  pub fn read(path: &Path, is_new: bool) -> BinResult<Self> {
+  pub fn read(path: &Path, endian: Endian, is_new: bool) -> BinResult<Self> {
     let mut file = File::open(path)?;
-    Self::read_file(&mut file, is_new)
+    Self::read_file(&mut file, endian, is_new)
   }
 
-  pub fn read_file(file: &mut File, is_new: bool) -> BinResult<Self> {
+  pub fn read_file(file: &mut File, endian: Endian, is_new: bool) -> BinResult<Self> {
     let mut sections = Vec::new();
     let file_size = file.metadata()?.len();
 
@@ -117,13 +117,13 @@ impl Toc {
     while file.stream_position()? < file_size {
       // hack that allows newer SOI packages to load
       let read_zlib_header = !is_new;
-      let section = Section::read_be_args(file, binrw::args! {read_zlib_header})?;
+      let section = Section::read_options(file, endian, binrw::args! {read_zlib_header})?;
       sections.push(section);
     }
 
     Ok(Self { sections })
   }
-
+  
   pub fn find_section(&self, id: u32) -> Option<&Section> {
     self.sections.get(id as usize)
   }

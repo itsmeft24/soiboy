@@ -1,21 +1,30 @@
 use std::path::Path;
 
-use binrw::{BinRead, BinResult};
+use binrw::{BinRead, BinResult, Endian};
 
 use crate::{
   ComponentHeader, Section, Soi, StaticTexture, StreamingCollisionModel, StreamingMotionPack,
-  StreamingRenderableModel, StreamingTexture, Toc,
+  StreamingRenderableModel, StreamingTexture, Toc, X360StaticTextureHeader, XNGHeader,
 };
 
-pub struct SoiSoup<TH: BinRead<Args<'static> = ()> + 'static> {
+pub struct SoiSoup<
+  StreamingTH: BinRead<Args<'static> = ()> + 'static,
+  StaticTH: BinRead<Args<'static> = ()> + 'static,
+  MH: BinRead<Args<'static> = ()> + 'static,
+> {
   toc: Toc,
-  soi: Soi<TH>,
+  soi: Soi<StreamingTH, StaticTH, MH>,
 }
 
-impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
-  pub fn cook(toc_path: &Path, soi_path: &Path) -> BinResult<Self> {
-    let soi = Soi::read(soi_path)?;
-    let toc = Toc::read(toc_path, soi.header.version == 0x101)?;
+impl<
+    StreamingTH: BinRead<Args<'static> = ()>,
+    StaticTH: BinRead<Args<'static> = ()>,
+    MH: BinRead<Args<'static> = ()>,
+  > SoiSoup<StreamingTH, StaticTH, MH>
+{
+  pub fn cook(toc_path: &Path, soi_path: &Path, endian: Endian) -> BinResult<Self> {
+    let soi = Soi::read(soi_path, endian)?;
+    let toc = Toc::read(toc_path, endian, soi.header.version == 0x101)?;
 
     Ok(Self { toc, soi })
   }
@@ -42,11 +51,11 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     components
   }
 
-  pub fn streaming_textures(&self) -> &[StreamingTexture<TH>] {
+  pub fn streaming_textures(&self) -> &[StreamingTexture<StreamingTH>] {
     self.soi.get_streaming_textures()
   }
 
-  pub fn static_textures(&self) -> &[StaticTexture] {
+  pub fn static_textures(&self) -> &[StaticTexture<StaticTH>] {
     self.soi.get_static_textures()
   }
 
@@ -54,7 +63,7 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     self.soi.get_motion_packs()
   }
 
-  pub fn renderable_models(&self) -> &[StreamingRenderableModel] {
+  pub fn renderable_models(&self) -> &[StreamingRenderableModel<MH>] {
     self.soi.get_renderable_models()
   }
 
@@ -77,7 +86,7 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     section_id: u32,
     component_id: u32,
     instance_id: u32,
-  ) -> Option<&StaticTexture> {
+  ) -> Option<&StaticTexture<StaticTH>> {
     if let Some(header) = self.soi.find_static_texture(section_id, component_id) {
       return Some(header);
     }
@@ -91,7 +100,7 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     section_id: u32,
     component_id: u32,
     instance_id: u32,
-  ) -> Option<&StreamingTexture<TH>> {
+  ) -> Option<&StreamingTexture<StreamingTH>> {
     if let Some(header) = self.soi.find_streaming_texture(section_id, component_id) {
       return Some(header);
     }
@@ -133,7 +142,7 @@ impl<TH: BinRead<Args<'static> = ()>> SoiSoup<TH> {
     section_id: u32,
     component_id: u32,
     instance_id: u32,
-  ) -> Option<&StreamingRenderableModel> {
+  ) -> Option<&StreamingRenderableModel<MH>> {
     if let Some(header) = self.soi.find_model(section_id, component_id) {
       return Some(header);
     }
