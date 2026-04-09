@@ -24,7 +24,7 @@ impl<
 {
   pub fn cook(toc_path: &Path, soi_path: &Path, endian: Endian) -> BinResult<Self> {
     let soi = Soi::read(soi_path, endian)?;
-    let toc = Toc::read(toc_path, soi.header.version == 0x101)?;
+    let toc = Toc::read(toc_path, endian, soi.header.version == 0x101)?;
 
     Ok(Self { toc, soi })
   }
